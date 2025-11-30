@@ -20,6 +20,8 @@ void ServoController::init() {
 
 void ServoController::write(uint8_t index, int angle) {
     if(index < 4) {
+        if(angle < 0) angle = 0;
+        if(angle > 180) angle = 180;
         _servos[index].write(angle);
     }
 }

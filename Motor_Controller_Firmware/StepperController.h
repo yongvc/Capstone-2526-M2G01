@@ -14,14 +14,17 @@ class StepperController {
 public:
     StepperController();
     void init();
-    void enable(Axis axis);
-    void disable(Axis axis);
-    void setMicrosteps(Axis axis, int microsteps);
-    void setCurrent(Axis axis, int ma);
+    void enable();
+    void disable();
     
     // Motion control
     void setDirection(Axis axis, bool dir);
     void step(Axis axis); // Generate a single step pulse
+    void moveMM(Axis axis, float distanceMM, float maxSpeedMM_s, float accelMM_s2);
+
+    static constexpr float STEPS_PER_MM = 40.0;
+    static constexpr float MAX_SPEED_MM_S = 600.0;
+    static constexpr float MAX_ACCEL_MM_S2 = 8000.0;
 
 private:
     TMC2209 _tmc[3]; // One driver object per axis

@@ -17,6 +17,7 @@ public:
 
 private:
     uint8_t _ioPins[5];
+    uint8_t _limitPins[3];
 };
 
 #endif

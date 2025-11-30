@@ -50,22 +50,20 @@ void processSerialCommand() {
           Serial.printf("Servo %d set to %d\n", index, angle);
         }
         break;
-      case 'M': // Move Stepper: M <axis> <steps> <dir> <delay_us>
+      case 'M': // Move Stepper: M <axis> <distance_mm> <max_speed_mm_s> <accel_mm_s2>
         {
           int axis = Serial.parseInt();
-          int steps = Serial.parseInt();
-          int dir = Serial.parseInt();
-          int delayUs = Serial.parseInt();
-          if(delayUs <= 0) delayUs = 1000; // Default speed
-
-          stepperController.setDirection((Axis)axis, dir);
-          Serial.printf("Moving Axis %d, %d steps, dir %d\n", axis, steps, dir);
+          float distanceMM = Serial.parseFloat();
+          float maxSpeed = Serial.parseFloat();
+          float accel = Serial.parseFloat();
           
-          // Blocking move for simple demo
-          for(int i=0; i<steps; i++) {
-            stepperController.step((Axis)axis);
-            delayMicroseconds(delayUs);
-          }
+          if(maxSpeed <= 0) maxSpeed = 50.0; // Default speed mm/s
+          if(accel <= 0) accel = 100.0; // Default accel mm/s^2
+
+          Serial.printf("Moving Axis %d, %.2f mm, Speed %.2f, Accel %.2f\n", axis, distanceMM, maxSpeed, accel);
+          
+          stepperController.moveMM((Axis)axis, distanceMM, maxSpeed, accel);
+          
           Serial.println("Move Complete");
         }
         break;

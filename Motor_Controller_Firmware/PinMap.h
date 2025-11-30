@@ -36,6 +36,11 @@
 #define PIN_STEP_Z  15
 #define PIN_DIR_Z   7
 
+// --- Limit Switches (Mapped to IO pins for now) ---
+#define PIN_LIMIT_X PIN_IO_1
+#define PIN_LIMIT_Y PIN_IO_2
+#define PIN_LIMIT_Z PIN_IO_3
+
 // --- Digital IOs (5) ---
 #define PIN_IO_1    13
 #define PIN_IO_2    14
