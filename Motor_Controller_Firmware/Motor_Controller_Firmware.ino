@@ -57,8 +57,8 @@ void processSerialCommand() {
           float maxSpeed = Serial.parseFloat();
           float accel = Serial.parseFloat();
           
-          if(maxSpeed <= 0) maxSpeed = 50.0; // Default speed mm/s
-          if(accel <= 0) accel = 100.0; // Default accel mm/s^2
+          if(maxSpeed <= 0) maxSpeed = StepperController::MAX_SPEED_MM_S; // Default speed mm/s
+          if(accel <= 0) accel = StepperController::MAX_ACCEL_MM_S2; // Default accel mm/s^2
 
           Serial.printf("Moving Axis %d, %.2f mm, Speed %.2f, Accel %.2f\n", axis, distanceMM, maxSpeed, accel);
           
@@ -79,6 +79,31 @@ void processSerialCommand() {
           int axis = Serial.parseInt();
           bool val = ioController.readLimitSwitch(axis);
           Serial.printf("Limit %d: %d\n", axis, val);
+        }
+        break;
+      case 'C':
+        {
+          int angle = Serial.parseInt();
+          servoController.write(0, 90-angle);
+          servoController.write(1, 90+angle);
+          delay(300);
+          servoController.write(0, 90);
+          servoController.write(1, 90);
+          delay(200);
+          servoController.write(0, 90-angle);
+          servoController.write(1, 90+angle);
+          delay(300);
+          servoController.write(0, 90);
+          servoController.write(1, 90);
+        }
+        break;
+      case 'D':
+        {
+          int angle = Serial.parseInt();
+          servoController.write(2, 90-angle);
+          delay(1000);
+          servoController.write(2, 90);
+          
         }
         break;
     }

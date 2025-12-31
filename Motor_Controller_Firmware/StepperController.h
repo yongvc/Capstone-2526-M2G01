@@ -23,8 +23,8 @@ public:
     void moveMM(Axis axis, float distanceMM, float maxSpeedMM_s, float accelMM_s2);
 
     static constexpr float STEPS_PER_MM = 40.0;
-    static constexpr float MAX_SPEED_MM_S = 600.0;
-    static constexpr float MAX_ACCEL_MM_S2 = 8000.0;
+    static constexpr float MAX_SPEED_MM_S = 500.0;
+    static constexpr float MAX_ACCEL_MM_S2 = 6000.0;
 
 private:
     TMC2209 _tmc[3]; // One driver object per axis
