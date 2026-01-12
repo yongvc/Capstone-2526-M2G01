@@ -1,0 +1,17 @@
+# Linguist overrides for GitHub language detection
+# Mark generated/vendor files to exclude from language statistics
+
+# PCB Interactive BOM - auto-generated HTML file (18MB)
+PCB/*.html linguist-generated=true
+
+# CAD files - not code
+CAD/** linguist-vendored=true
+
+# Documentation files
+*.pdf linguist-documentation=true
+*.png linguist-documentation=true
+*.jpg linguist-documentation=true
+*.jpeg linguist-documentation=true
+
+# Report text files as documentation
+Report/*.txt linguist-documentation=true
