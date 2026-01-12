@@ -42,7 +42,7 @@ main.py (DashboardApp)
 - **Single Target Mode**: Select and harvest one lemon
 - **Auto-Harvest Mode**: Consecutively harvest 3 lemons (configurable)
 - **State Machine**: IDLE -> APPROACHING -> CUTTING -> DEPOSITING -> RETURNING
-- **Jitter Tolerance**: Maintains tracking during camera vibration (up to 2s occlusion)
+- **Jitter Tolerance**: Maintains tracking during camera vibration (up to 3s occlusion)
 
 ### User Interface
 - **Dark Theme**: Modern CustomTkinter interface
@@ -116,11 +116,17 @@ class HarvestingStateMachine:
     self.approach_threshold = 25      # pixels alignment tolerance
     self.visual_servo_gain = 0.10     # mm per pixel error
     self.forward_speed = 20.0         # mm per forward step
+    self.max_correction = 15.0        # max mm per correction
+    self._max_frames_lost = 90        # 3 seconds at 30fps before abort
     
     # Speed settings
     self.approach_speed = 30          # mm/s for X/Z corrections
     self.forward_approach_speed = 80  # mm/s for Y forward
     self.fast_speed = 200             # mm/s for deposit/return
+    
+    # Cutter offsets
+    self.cutting_z_offset = 50        # mm (cutter below camera)
+    self.cutting_y_offset = 60        # mm (cutter behind camera)
 ```
 
 State transitions:
@@ -171,7 +177,7 @@ class KalmanTracker:
 
 Benefits:
 - Smooths detection jitter from camera vibration
-- Predicts position during temporary occlusion (up to 60 frames / 2s)
+- Predicts position during temporary occlusion (up to 60 frames / 2s in Kalman, 90 frames / 3s in harvester)
 - Provides velocity for predictive control
 
 ### embedded_cv_display.py - Native OpenCV Display

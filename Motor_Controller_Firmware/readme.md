@@ -163,12 +163,28 @@ static constexpr float MAX_ACCEL_MM_S2 = 6000.0; // Max acceleration mm/s^2
 
 ## Pin Configuration
 
-See `PinMap.h` for detailed pin assignments. Key pins:
-- Stepper step/dir pins for X, Y, Z axes
-- TMC2209 UART pins for driver configuration
-- Servo PWM pins (4 channels)
-- LED output pins (4 channels)
-- Digital input pins for optional limit switches (currently using software limits)
+### GPIO Assignments (from PinMap.h)
+
+| Function | GPIO Pins |
+|----------|-----------|
+| **LEDs** | 39, 40, 41, 42 |
+| **Servos** | 9, 10, 11, 12 |
+| **Stepper Enable** | 20 (shared, active-LOW) |
+| **X-axis** | Step: 8, Dir: 18 |
+| **Y-axis** | Step: 17, Dir: 16 |
+| **Z-axis** | Step: 15, Dir: 7 |
+| **TMC2209 UART** | RX: 2, TX: 1 |
+| **Digital I/O** | 13, 14, 21, 47, 48 |
+
+### Config.h Constants
+
+| Parameter | Value |
+|-----------|-------|
+| Serial Baud Rate | 115200 |
+| TMC2209 R_SENSE | 0.11 ohms |
+| Servo PWM Min | 500 us |
+| Servo PWM Max | 2400 us |
+| LED Blink Interval | 500 ms |
 
 ## Integration with Dashboard
 

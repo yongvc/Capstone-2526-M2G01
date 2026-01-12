@@ -149,7 +149,24 @@ This project contains the complete source code and design files for an autonomou
 - **Detection Rate**: 25-30 FPS
 - **Display Rate**: 60 FPS (native OpenCV)
 - **Serial Latency**: <50ms round-trip
-- **Tracking Recovery**: Up to 2 seconds occlusion tolerance
+- **Tracking Recovery**: Up to 3 seconds occlusion tolerance (90 frames)
+
+## Technical Specifications
+
+| Component | Specification |
+|-----------|---------------|
+| **Axis Travel** | X: 130mm, Y: 230mm, Z: 130mm |
+| **Max Speed** | 500 mm/s |
+| **Max Acceleration** | 6000 mm/s² |
+| **Steps per mm** | 40 |
+| **Camera Resolution** | 640 x 480 @ 30 FPS |
+| **Detection HSV** | H: 10-30, S: 70-255, V: 40-255 |
+| **Kalman Filter** | process_noise=0.5, measurement_noise=1.0 |
+| **Visual Servo Gain** | 0.10 mm/pixel |
+| **Area Threshold** | 23000 px² (triggers cutting) |
+| **Approach Threshold** | 25 px (alignment tolerance) |
+| **Cutter Offset** | Z: 50mm, Y: 60mm |
+| **Total Cost** | RM 608 |
 
 ## Authors
 
