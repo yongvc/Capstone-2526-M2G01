@@ -1,7 +1,14 @@
 # Reports (private, not for version control)
-Report/
+Report/Individual*
+Report/rules&rubric.txt
+Report/Discussion_note.txt
+Report/EECS Abstract.txt
+Report/requestinfo.txt
+Report/Technical Report template text.txt
 
 Video/
+
+Claim/
 
 # Python
 __pycache__/

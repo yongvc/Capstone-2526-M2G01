@@ -1,0 +1,1278 @@
+Automated Lemon Harvesting Robot
+
+Yasser Ashraf Aly Abdelsattar Youssef, Afifah Maisarah binti Asmadi, Chew Yong Jun, Yong Vin Cent, Tn Hj Mohd Shukri Abdul Manaf
+Universiti Teknologi Malaysia, Malaysia
+
+================================================================================
+ABSTRACT
+================================================================================
+
+The agricultural industry faces increasing challenges due to labor shortages and the need for precision in fruit harvesting, particularly for citrus crops like lemons which require careful handling. This project addresses these challenges through the development of an automated lemon harvesting robot designed to autonomously identify, reach, and collect ripe fruit. The system utilizes a three-axis (XYZ) linear slider mechanism driven by NEMA 17 stepper motors and timing belts for precise spatial positioning. At the core of the hardware is a customized PCB integrating an ESP32 microcontroller, buck converters, stepper motor drivers, and servo controllers to manage power and motion. For fruit identification, the system employs an OpenCV-based computer vision algorithm that performs color segmentation and coordinate detection to distinguish ripe lemons from the canopy. Once a target is identified, a central Python script orchestrates the harvesting sequence, calculating trajectories and transmitting specific motion commands to the embedded controller. The controller then maneuvers a specialized end-effector to cut and catch the lemon before placing it into a collection basket. A dedicated user interface provides real-time monitoring of lemon ripeness, lemon positions, and system status. Preliminary results indicate a fruit detection success rate of 90% and a positioning accuracy of within 10mm. This study demonstrates that low-cost, high-precision robotics can effectively digitize orchard management, offering a scalable solution to agricultural labor shortages and improving overall harvest yield.
+
+Keywords: Agricultural Robotics, Computer Vision, Automated Harvesting, ESP32 Microcontroller, Precision Agriculture
+
+================================================================================
+1. CONCEIVE
+================================================================================
+
+1.1 Background Introduction
+
+The target users for this project are fruit farmers, especially those who grow citrus fruits like lemons. These farmers face many problems when it comes to harvesting their crops.
+
+The first major problem is shortage of workers. Farm work is tiring and the harvesting season only lasts for a few months each year. This makes it hard to find people who want to do this job. Big farms sometimes need 50 to 60 workers just to harvest all the fruit, which costs a lot of money.
+
+Another problem is worker safety. The traditional way of picking fruit involves climbing up ladders to reach fruit on tall trees. Workers can fall and get injured. New workers who do not have experience often damage the fruit because they do not know the proper way to handle it.
+
+The quality of harvest is also affected by using manual labour. How good the harvest turns out depends on how skilled the worker is. When workers use gloves and clippers, they may not cut the stem at the right place or they may squeeze the fruit too hard. This damages the fruit and makes it harder to sell.
+
+Lastly, the whole harvesting process is still done by hand, from picking the fruit to sorting them by quality. This takes a lot of time and the farm cannot process as many fruit as they could with machines.
+
+These problems show why there is a need for a robot that can find ripe fruit, reach it accurately, and pick it without causing damage. This would help farmers save money on workers and get better quality fruit.
+
+1.2 End-user Input Data
+
+To understand what farmers really need, our team prepared a questionnaire and interviewed real farmers. We asked the following questions:
+
+1. How do you currently harvest fruits or crops from the trees?
+2. What are the biggest challenges or difficulties you face during harvesting?
+3. Which part of the harvesting process takes the most time or effort?
+4. Are there any safety or injury risks that come with harvesting?
+5. How many workers are usually needed to harvest one tree or a section of the farm?
+6. Have you ever tried or seen harvesting machines or tools before? If yes, what did you like or dislike about them?
+7. What features would be most valuable to you in a harvesting solution?
+8. What kind of terrain and tree height should the solution be able to handle?
+9. How much are you willing to invest or spend on technology that can make harvesting easier or faster?
+10. Would you be open to testing or giving feedback on a prototype harvesting solution?
+
+We conducted interviews with several farmers and plant sellers. From these discussions, each team member extracted key data points.
+
+Yasser found that farmers are interested in features like camera systems for fruit counting, smart sensors to detect fruit size and colour, lightweight harvesting robot arms, and drone monitoring for crop health.
+
+Chew Yong Jun learned that farmers use equipment with cameras, pruners and nets. They face challenges with labour availability and weather. There is interest in automated ripeness detection based on colour, firmness, and average fruit size. Some farms use open fertigation systems with IoT integration.
+
+Vin Cent discovered that harvesting is done manually with gloves and clippers. The main challenges are labour availability and weather. Farms need 50 to 60 workers. There are risks of falling from ladders and inexperienced workers damaging crops. Previous harvesting machines were not cost effective. The terrain is flat but sandy and muddy, with plants up to 10 feet tall. Farmers are open to cost-effective solutions and willing to allow farm visits for testing.
+
+Afifah found that farmers want better control and better cutters. Ripeness is judged based on colours, firmness, and good sizes. They track planting days (Hari Selepas Tanam) and harvest rate per hour. They need a catcher or net to maintain fruit shape. Challenges include labour shortage and weather dependency. Harvesting starts early in the morning for quality.
+
+1.3 User Needs Analysis
+
+Based on what we learned from the interviews, we grouped all the data into six categories using data clustering.
+
+The first category is Automation and Control. This includes automated ripeness detection based on colour, firmness and size. It also includes timing control for when to harvest and systems for predicting labour needs.
+
+The second category is Sensing and Vision. This includes machine vision for counting fruit, smart sensors to detect fruit size and colour, IoT systems with sensors that connect to computers, and weather sensors.
+
+The third category is Monitoring. This includes drone monitoring for checking crop health, drone mapping to find ripe areas, and remote dashboards so farmers can check farm status from anywhere. Some farms want Starlink internet for stable connectivity.
+
+The fourth category is Harvesting Systems. This includes lightweight harvesting robot arms, automated harvesting combined with sorting and grading, catcher or net systems to maintain fruit shape, and improved cutters.
+
+The fifth category is Farm Management. This includes tracking harvesting rate per hour, open fertigation systems, tracking of planting dates, and open farm systems that work in outdoor environments. Farms want on-site visits for testing and validation.
+
+The sixth category is Challenges and Constraints. This includes labour availability problems where farms need 50 to 60 workers. Manual harvesting and grading is slow. There are injuries from falling off ladders and from inexperienced workers. Weather affects work because of rain and heat. The terrain is flat but sandy and muddy. Past harvesting machines were not cost effective. Harvesting needs to start early in the morning for quality.
+
+1.4 Personification and Design Statement
+
+We created a persona to represent our target users. His name is Pak Rahman. He is 55 years old and is an experienced farmer. He owns a medium-sized fruit farm of 5 acres. He has 30 years of farming experience but uses traditional methods and has limited knowledge about technology.
+
+Pak Rahman faces several problems. He has a shortage of workers and high worker turnover. The weather is unpredictable and often disrupts his harvest. He has difficulty identifying which fruits are ripe accurately.
+
+What Pak Rahman needs is easy-to-use automated tools that work like plug-and-play. He wants reliable weather and ripeness alerts. He needs affordable harvesting solutions. He also needs local support and training for any new technologies he uses.
+
+Our design statement is: How might we help Pak Rahman to harvest effectively despite labour shortages by providing efficient, consistent, and affordable automation tools that adapt to his existing workflow?
+
+1.5 Idea Generation
+
+Our team spent time thinking of different ways to solve this problem.
+
+The first idea was to pull the fruit slightly before cutting. This would move the stem to a position where it is easier to cut. However, we did not choose this because pulling the fruit might bruise it.
+
+The second idea was to use suction to hold the fruit while cutting. This is like a vacuum cleaner that holds the fruit. We did not choose this because the mechanism is complicated and might still damage the fruit.
+
+The third idea was to use a camera to see where the stem is and cut it precisely without touching the fruit. We chose this idea because it causes the least damage to the fruit and relies on accurate positioning instead of grabbing.
+
+The fourth idea was to use a robot arm like in factories to grab and twist the fruit off. We did not choose this because robot arms are very expensive and hard to control.
+
+We chose our ideas based on whether we could actually build them with what we have, whether they solve the farmer's needs, how much they cost, and whether the technology is proven to work.
+
+Our final design is a robot that moves in three directions (X, Y, and Z) using a camera to detect lemons. It positions a scissor-type cutter at the stem and cuts without touching the fruit. A gripper catches the fruit and puts it into a basket.
+
+1.6 Conceptual Prototype Development
+
+We built our prototype in several stages.
+
+In the first stage, we designed the mechanical frame. We used SolidWorks software to draw a XYZ sliding system. We picked NEMA 17 stepper motors with timing belts to move each axis. The frame is made from aluminium pieces that can be adjusted.
+
+In the second stage, we designed the cutting mechanism. We used thread U-shape scissors that are moved by MG90S servo motors. There are two servos that close the scissors like a pinching motion. There is also a gripper to catch the fruit after it is cut.
+
+In the third stage, we planned the vision system. We use a USB webcam to see the lemons. A computer program written using OpenCV library looks at the colours in the image to find yellow lemons. The program tells the motors where to move.
+
+In the fourth stage, we designed the control system. We made a custom circuit board with an ESP32 chip as the brain. This board has TMC2209 chips to control the stepper motors. It receives commands through a USB cable from a computer.
+
+In the fifth stage, we built the user interface. This is a program on the computer that shows the camera view and lets the user control the robot. It was made using Python with a library called CustomTkinter.
+
+1.7 STEEP Analysis and SDG Requirements
+
+We looked at how our project affects different parts of society.
+
+TABLE I: STEEP Analysis Summary
+
+| Aspect        | Contribution                                 |
+|---------------|----------------------------------------------|
+| Social        | Reduces physical labour requirements, leading to fewer ladder injuries and enabling elderly farmers to continue working. |
+| Technological | Democratizes precision agriculture through low-cost robotics accessible to small farms. |
+| Economic      | Reduces labour costs by 60-70% with ROI within 2-3 harvest seasons. |
+| Environmental | Reduces food waste from damaged fruit using electric motors with no emissions. |
+| Political     | Aligns with National Agrofood Policy 2021 and supports food security goals. |
+
+Social Impact:
+For society, our robot reduces the need for physical labour. This means fewer workers will get injured from falling off ladders. Older farmers who cannot do heavy work anymore can still run their farms with help from the robot. The robot works consistently regardless of weather or worker availability.
+
+Technological Impact:
+For technology, our project shows how cameras, electronics, and motors can work together for farming. This kind of technology was previously only available to big companies, but we made it affordable for small farms. The open-source design allows others to replicate and improve it.
+
+Economic Impact:
+For the economy, our robot can reduce labour costs because farmers do not need to hire as many workers. A farmer could get back the money spent on the robot within 2 to 3 harvest seasons. This also creates new jobs for people who maintain and repair the robots. The cost of RM 608 is approximately 380 times cheaper than commercial alternatives.
+
+Environmental Impact:
+For the environment, picking fruit carefully means less fruit gets damaged and thrown away. The electric motors do not produce exhaust fumes. The robot uses less energy than big farm machines. Reduced food waste contributes to sustainability goals.
+
+Political Impact:
+For politics, our project fits with Malaysia's National Agrofood Policy which encourages farmers to use new technology. It also helps with food security by making harvesting more efficient.
+
+UN Sustainable Development Goals (SDG) Contributions:
+
+| SDG   | Goal Name                  | Contribution                                  |
+|-------|----------------------------|-----------------------------------------------|
+| SDG 2 | Zero Hunger                | Reduces post-harvest losses by 10-15%         |
+| SDG 8 | Decent Work                | Eliminates dangerous ladder work              |
+| SDG 9 | Industry and Innovation    | Develops affordable agricultural technology   |
+| SDG 12| Responsible Production     | Minimizes fruit waste and resource usage      |
+
+Our project also supports the United Nations goals for sustainable development. It helps with Goal 2 (Zero Hunger) by reducing wasted fruit. It helps with Goal 8 (Decent Work) by reducing dangerous jobs. It helps with Goal 9 (Industry and Innovation) by developing technology for farms. It helps with Goal 12 (Responsible Production) by reducing waste.
+
+1.8 Innovative Features
+
+Our robot has several features that make it different from other products.
+
+First, it does not touch the fruit. Most other robots grab the fruit to pick it. Our robot only cuts the stem, so the fruit does not get squeezed or bruised.
+
+Second, it is very cheap. All the parts cost less than RM 2000. Other harvesting robots cost RM 50,000 or more. This makes our robot affordable for small farmers.
+
+Third, the design is modular. The ESP32 controller uses simple text commands to move. This means different vision programs or control software can be used with the same hardware.
+
+Fourth, the robot adjusts its position while approaching the fruit. The camera keeps watching the lemon and the robot corrects its path if the lemon moves or if the first detection was not accurate.
+
+Fifth, we use two servos for cutting. This gives a stronger cut and the scissors can also hold the fruit after cutting so it does not fall.
+
+================================================================================
+2. DESIGN
+================================================================================
+
+2.1 System Architecture
+
+Our robot system has three main parts that work together.
+
+The first part is the user interface on a computer. This is a Python program that shows the camera view on screen. The user can see where the lemons are and control the robot from here. The program also shows messages about what the robot is doing.
+
+The second part is the ESP32 controller. This is the brain of the robot. It receives commands from the computer through a USB cable. When it gets a command like "move X axis 50mm", it controls the motors to make that movement happen. It also controls the servos that operate the cutter.
+
+The third part is the hardware. This includes the stepper motors that move the XYZ axes, the servo motors that operate the cutter and gripper, the webcam that sees the fruit, and LEDs that show the status of the robot.
+
+The computer sends commands to the ESP32 through a serial connection. The ESP32 then sends electrical signals to the motors to make them move. The camera connects directly to the computer for image processing.
+
+Software Architecture Diagram:
+
++--------------------------------------------------+
+|              Python Dashboard (main.py)           |
+|  +----------------+  +-----------------------+   |
+|  | CameraThread   |  | DetectionThread       |   |
+|  | - Frame capture|  | - LemonDetector       |   |
+|  | - 30 FPS       |  | - HSV segmentation    |   |
+|  | - DirectShow   |  | - Watershed algorithm |   |
+|  +-------+--------+  | - Kalman tracking     |   |
+|          |           +-----------+-----------+   |
+|          v                       v               |
+|  +----------------------------------------------+|
+|  |    FrameBuffer (Triple-buffered)             ||
+|  +----------------------------------------------+|
+|          |                       |               |
+|  +-------v-----------------------v--------------+|
+|  |            DashboardApp (GUI)                ||
+|  | - EmbeddedCVDisplay (native OpenCV rendering)||
+|  | - Control panels    - Status logging         ||
+|  | - Serial polling    - Target selection       ||
+|  +-------------------+--+-----------------------+|
+|                      |  |                        |
+|  +-------------------v--v-----------------------+|
+|  |      HarvestingStateMachine (harvester.py)   ||
+|  | States: IDLE->APPROACHING->CUTTING->         ||
+|  |         DEPOSITING->RETURNING->IDLE          ||
+|  | Features:                                    ||
+|  | - Multi-axis simultaneous control            ||
+|  | - Visual servo with Kalman smoothing         ||
+|  | - Auto-harvest mode (consecutive targets)    ||
+|  +-------------------+--------------------------+|
++---------------------|----------------------------+
+                      | Serial (115200 baud)
+                      v
++--------------------------------------------------+
+|           ESP32 Firmware (Motor_Controller)       |
+|  +----------------+  +-------------------------+ |
+|  |StepperController| |ServoController         | |
+|  |- Non-blocking  | |- 4 PWM channels         | |
+|  |- 3 axes (XYZ)  | |- Cutter and gripper     | |
+|  |- TMC2209 UART  | |- 500-2400us PWM range   | |
+|  |- Soft limits   | |                         | |
+|  +-------+--------+ +------------+------------+ |
+|          |                       |              |
+|  +-------v-----------------------v------------+ |
+|  |        Hardware Abstraction Layer          | |
+|  | LEDController | IOController | Config.h    | |
+|  +------------------------------------------------+
+|                      |                          |
++----------------------|---------------------------+
+                       v
++--------------------------------------------------+
+|                    Hardware                       |
+|  +-----------+  +-----------+  +---------------+ |
+|  |TMC2209 x3 |  |MG90S x4   |  |USB Webcam     | |
+|  |Stepper    |  |Servo      |  |640x480 30fps  | |
+|  |Drivers    |  |Motors     |  |               | |
+|  +-----------+  +-----------+  +---------------+ |
+|  +-----------+  +-----------+                    |
+|  |NEMA17 x3  |  |LEDs x4    |                    |
+|  |Stepper    |  |Status     |                    |
+|  |Motors     |  |Indicators |                    |
+|  +-----------+  +-----------+                    |
++--------------------------------------------------+
+
+Communication Protocol:
+
+The system uses USB-to-UART serial communication at 115200 baud for reliable data transfer between the computer and ESP32 microcontroller. Commands follow a simple text-based format consisting of a single character command identifier followed by space-separated numerical parameters and terminated with a newline character. The firmware responds with acknowledgment messages such as "OK" for immediate commands, "BUSY" for blocking operations, and "DONE" upon movement completion. To prevent command loss during rapid communication, the serial buffer clearing routine was designed to preserve queued commands by only clearing characters up to the newline delimiter.
+
+2.2 Flowchart for Coding
+
+The main program follows these steps to harvest a lemon.
+
+First, the system starts up and waits for a connection. When the user connects, the camera turns on and starts looking for lemons.
+
+The detection algorithm looks at each frame from the camera. It converts the image to HSV colour space and looks for yellow colours. When it finds something yellow and round, it marks it as a lemon.
+
+If no lemons are found, the system waits and keeps looking. If lemons are found, the system picks the one closest to the centre of the camera view.
+
+The robot then checks if the lemon is centred in the camera. If the lemon is too far to the left or right, the robot moves the X axis to centre it. If the lemon is too high or low, the robot moves the Z axis to centre it.
+
+Once the lemon is centred, the robot checks if it is close enough. It does this by looking at how big the lemon appears in the image. A bigger image means the lemon is closer. If the lemon is not close enough, the robot moves forward on the Y axis.
+
+When the lemon is centred and close enough, the robot starts the cutting sequence. It moves the Z axis up to position the cutter at the stem. Then it moves the Y axis forward to put the cutter around the stem. Then it closes the scissors to cut.
+
+After cutting, the robot retracts back. It moves the Z axis down and the Y axis back. Then it moves to the basket position, opens the gripper to drop the fruit, and returns to the home position. The harvest is complete.
+
+2.3 Electrical Circuit Schematic
+
+The electrical system has several parts.
+
+For power, we use a 12V power supply. This goes to two buck converters. One converter changes 12V to 5V for the servos and ESP32. The other converter changes 12V to 3.3V for the logic circuits. The buck converters need specific capacitors to work correctly. We learned that the boot capacitor must be 10nF, not 10uF.
+
+For motor control, we use three TMC2209 stepper driver chips. These chips make the motors move smoothly and quietly. Each driver has step and direction pins that connect to the ESP32. There is also an enable pin that must be set LOW for the motors to work.
+
+For servo control, the ESP32 sends PWM signals to four servo motors. These servos control the cutter blades and gripper. The PWM range is configured as 500-2400 microseconds (Config.h:12-13).
+
+The ESP32 also connects to four LEDs that show status. One LED blinks to show the system is running. Another LED turns on when motors are moving. Another LED shows when the robot is at the home position. The last LED blinks fast if there is a problem.
+
+The ESP32 microcontroller pin assignments are defined in PinMap.h for maintainability and ease of modification. The status LEDs are connected to GPIO pins 39, 40, 41, and 42, providing visual feedback during operation. The four servo PWM outputs utilise GPIO pins 9, 10, 11, and 12 for controlling the cutter and gripper mechanisms. All three stepper motor drivers share a common enable signal on GPIO 20, which must be driven LOW to activate the motors. The X-axis stepper motor uses GPIO 8 for step pulses and GPIO 18 for direction control. The Y-axis stepper is controlled through GPIO 17 for stepping and GPIO 16 for direction. The Z-axis stepper utilises GPIO 15 for step pulses and GPIO 7 for direction. The TMC2209 drivers operate in legacy step/direction mode rather than UART mode, simplifying the control interface. Additional GPIO pins 13, 14, 21, 47, and 48 are reserved for future expansion and digital input/output capabilities.
+
+The TMC2209 stepper drivers are configured in standalone mode with automatic StealthChop detection for quiet operation. The microstepping resolution is set to 1/8 step through hardware configuration using board jumpers, providing a balance between positioning resolution and motor torque. The step and direction interface allows direct control from the ESP32 GPIO pins without requiring UART communication, reducing firmware complexity while maintaining smooth motor operation.
+
+2.4 Printed Circuit Board Layout
+
+We designed a custom PCB using EasyEDA software. The board is 100mm by 80mm with copper on both sides.
+
+The ESP32 module is placed in the centre of the board where it is easy to access for programming. The three TMC2209 drivers are placed in a row so they can cool down easily. The buck converters are placed near the power input with enough space between them. The servo connectors are on the edge of the board for easy wiring. The LEDs are visible from the front.
+
+We used wider copper traces for power connections (1.5mm) and thinner traces for signals (0.5mm). The bottom layer is mostly a ground plane which helps reduce electrical noise.
+
+2.5 Mechanical Design Drawing
+
+The mechanical structure was designed in SolidWorks software .The overall size is 400mm long, 300mm wide, and 350mm tall.
+
+The X-axis moves horizontally 130mm. It uses a GT2 timing belt with a 20-tooth pulley driven by a stepper motor. An MGN12 linear rail guides the movement smoothly.
+
+The Y-axis moves forward and backward 230mm. It also uses a GT2 belt and MGN12 linear rail.
+
+The Z-axis moves up and down 130mm with the same belt and rail system.
+
+The end effector is mounted on the Z-axis. It has the cutter which is a pair of thread scissors with a 50mm blade opening. Two MG90S servos close the scissors. One more servo operates the gripper that holds the fruit. The camera is mounted 50mm above the cutter so it can see the fruit and stem clearly.
+
+The frame is made from 20x20mm aluminium extrusion pieces. These are connected with corner brackets and can be adjusted.
+
+2.6 Human-Machine Interface Design
+
+The user interface was designed to be simple and easy to use. We used Python with the CustomTkinter library which makes nice-looking dark-themed windows.
+
+The left side of the screen shows the camera view. This takes up about 70% of the window so users can clearly see what the robot is looking at. When lemons are detected, they are marked with green outlines. The selected target has a yellow circle around it.
+
+The right side has control panels stacked from top to bottom. The first panel is for connecting to the robot through a serial port. There is a dropdown list to select the port and a button to connect or disconnect.
+
+The second panel shows detected lemons in a list. Each lemon shows its ID number and distance from centre. Users can click on a lemon to select it as the target.
+
+The third panel is for harvesting control. It shows the current status like "IDLE" or "CUTTING". There are buttons to start the automatic harvest or abort if something goes wrong.
+
+The fourth panel is for manual motor control. Users can select which axis to move, enter how far to move, and click buttons to make the robot move. This is useful for testing and calibration.
+
+The fifth panel is for testing the cutter and gripper. Users can enter servo angles and test the cutting or dropping actions.
+
+At the bottom is a log area that shows all commands sent and responses received. This helps with debugging.
+
+We chose dark colours so the interface is easy to look at for long periods. Green buttons mean start or go. Red buttons mean stop or emergency.
+
+2.7 System Flow Chart
+
+When the system is powered on, several things happen in sequence.
+
+First, the ESP32 starts up. It sets the serial communication to 115200 baud rate. It puts all servos to 90 degrees which is the neutral position. It configures the stepper drivers. It starts blinking the heartbeat LED.
+
+Second, the user opens the dashboard program on the computer. They select the COM port where the ESP32 is connected and click Connect. The program sends a "G" command to get the robot's configuration.
+
+Third, the camera starts. The camera thread begins capturing frames. The detection thread starts analysing frames to find lemons. The live video appears on the screen.
+
+Fourth, the main operation begins. In manual mode, the user can send individual commands to test motors and servos and calibrate positions. In automatic mode, the user clicks Start Harvest and the robot takes over, using the camera to guide itself through the complete harvest sequence.
+
+After finishing a harvest, the robot returns to manual mode and waits for the next command.
+
+2.8 Technical Specifications Summary
+
+TABLE II: Complete System Specifications
+
+| Category          | Specification              | Value                           |
+|-------------------|----------------------------|---------------------------------|
+| MECHANICAL        |                            |                                 |
+|                   | Overall dimensions         | 400 x 300 x 350 mm (L x W x H)  |
+|                   | X-axis travel              | 130 mm                          |
+|                   | Y-axis travel              | 230 mm                          |
+|                   | Z-axis travel              | 130 mm                          |
+|                   | Frame material             | 20x20mm aluminium T-slot        |
+|                   | Linear guides              | MGN12 rails with carriages      |
+|                   | Drive system               | GT2 belt, 20T pulley, NEMA17    |
+| ELECTRICAL        |                            |                                 |
+|                   | Main controller            | ESP32-S3-WROOM-1                |
+|                   | Input voltage              | 12V DC                          |
+|                   | Power consumption          | ~25W (peak during movement)     |
+|                   | Stepper drivers            | TMC2209 (x3)                    |
+|                   | Servo motors               | MG90S (x4)                      |
+|                   | Communication              | USB Serial, 115200 baud         |
+| MOTION CONTROL    |                            |                                 |
+|                   | Steps per mm               | 40                              |
+|                   | Maximum speed              | 500 mm/s                        |
+|                   | Maximum acceleration       | 6000 mm/s²                      |
+|                   | Approach speed (X/Z)       | 30 mm/s                         |
+|                   | Forward speed (Y)          | 80 mm/s                         |
+|                   | Fast speed (deposit/return)| 200 mm/s                        |
+|                   | Positioning accuracy       | ±9 mm (measured)                |
+|                   | Repeatability              | ±3 mm                           |
+| VISION SYSTEM     |                            |                                 |
+|                   | Camera                     | Logitech C260 USB webcam        |
+|                   | Resolution                 | 640 x 480 pixels                |
+|                   | Frame rate                 | 30 FPS                          |
+|                   | Detection algorithm        | HSV segmentation + Watershed    |
+|                   | Tracking algorithm         | Kalman filter (constant vel.)   |
+|                   | Detection rate             | 85% (outdoor conditions)        |
+|                   | Max occlusion tolerance    | 2 seconds (60 frames)           |
+| HARVESTING        |                            |                                 |
+|                   | Cycle time                 | 16 seconds/fruit                |
+|                   | Cutting success rate       | 80%                             |
+|                   | Max stem diameter          | 4 mm                            |
+|                   | Cutter type                | Thread U-shape scissors         |
+|                   | Cut pattern                | Triple-cut (3 cut motions)      |
+|                   | Auto-harvest capacity      | Configurable (default 3)        |
+| SOFTWARE          |                            |                                 |
+|                   | Firmware                   | Arduino C++ (ESP32)             |
+|                   | Dashboard                  | Python 3.10 + CustomTkinter     |
+|                   | Computer vision            | OpenCV 4.x                      |
+|                   | Display rendering          | Native OpenCV (60 FPS)          |
+|                   | Operating system           | Windows 10/11                   |
+
+================================================================================
+3. IMPLEMENTING
+================================================================================
+
+3.1 Human-Machine Interface
+
+The user interface was built using Python programming language with a library called CustomTkinter. This library creates modern-looking windows with a dark theme.
+
+The purpose of the interface is to give operators a central place where they can watch the harvesting process, test individual parts of the robot, and start automatic harvesting. We designed it with big buttons and clear text so it is easy to use.
+
+We tested the interface with users and they said they wanted to see clearly which lemon is selected. So we added a "TARGET" label and yellow circle around the selected lemon in the camera view.
+
+The interface runs on Windows and can work on Linux too. It needs Python 3.10 or later, the CustomTkinter library, OpenCV for video display, and PySerial for communicating with the ESP32.
+
+3.2 Circuit Implementation
+
+We ordered the custom PCB from JLCPCB and received 5 boards. The boards have green solder mask and white labels.
+
+To assemble the board, we first applied solder paste using a stencil. Then we placed all the small surface-mount components like resistors and capacitors. We heated the board on a hotplate at 250 degrees Celsius to melt the solder. Then we soldered the bigger parts like headers and connectors by hand. Finally, we installed the ESP32 module in its socket.
+
+Before turning on the power, we checked that there were no short circuits between power and ground. We used a multimeter to test continuity.
+
+When we first powered the board, we had a problem. The 5V output was not working. After checking the datasheet, we found that we used the wrong capacitor. The boot capacitor should be 10nF but we used 10uF. We replaced it with the correct value and the power supply worked.
+
+We had another problem where the motors would not move. After more investigation, we found that the Enable pin on the TMC2209 drivers needs to be LOW to enable the motors. Our original schematic had it connected to HIGH which kept the motors disabled. We fixed this by soldering wires to connect the Enable pins to a GPIO pin on the ESP32 so we can control it with software.
+
+After these fixes, we verified all the outputs. The 5V output measured 5.02V. The 3.3V output measured 3.31V. These are within acceptable range. We verified the motor signals using an oscilloscope.
+
+3.3 Enclosure or Casing Implementation
+
+For this prototype, we used an open frame design. This means the robot is not enclosed in a box. This is because we are still developing and need easy access to adjust things.
+
+The frame is made from 20x20mm aluminium T-slot extrusion. We chose this material because it can be adjusted easily during development. The pieces connect with corner brackets and T-nuts.
+
+For the electronics, we made a 3D printed case out of PLA plastic. This case has holes for air to flow through so the electronics do not overheat. It also has holes for cables to go through.
+
+The camera is mounted on a 3D printed bracket that can be adjusted up, down, left or right by about 15 degrees. We put rubber grommets on the mount to reduce vibration.
+
+We cut the aluminium pieces using a miter saw. The 3D printed parts were made on a Creality Ender 3 printer. Everything was put together using hex bolts and T-nuts.
+
+3.4 Connector and Wires Selection
+
+We chose different types of wires for different purposes.
+
+For motor power, we used 22 AWG silicone wire. This wire is rated for 3 amps which is more than enough for our motors. Silicone wire is flexible which is important because the motors are on moving parts.
+
+For signal wires, we used 28 AWG ribbon cable. These thinner wires are good for signals that do not carry much current.
+
+For the main 12V power, we used 18 AWG wire which can handle more current.
+
+For connectors, we used JST-XH 4-pin connectors for stepper motors. Servos use standard 3-pin servo headers. The power from the battery uses an XT60 connector which is safe and can handle high current. The ESP32 connects to the computer through USB.
+
+We chose silicone wire because it stays flexible even when the robot moves. We used colour coding to keep things organized: red for 12V, black for ground, and yellow for signals.
+
+3.5 Wires and Tubes Routing
+
+Keeping the wires organized is important so they do not get tangled or caught in moving parts.
+
+We installed drag chains on the X and Y axes. A drag chain is like a flexible tube that holds wires and moves with the machine. Our drag chains are 10mm by 15mm inside and can bend with a 1 meter radius.
+
+For the X-axis, the cables go through a drag chain from the moving carriage to a fixed point on the frame. For the Y-axis, another drag chain runs parallel to the rail. For the Z-axis, we left a service loop which is extra wire that flexes as the axis moves up and down.
+
+We bundled cables together using spiral wrap. Both ends of each cable are labeled so we know what they connect to. Extra wire length is coiled neatly at the controller end.
+
+We tested by moving all axes through their full range of motion. The cables did not get caught or tangled. They do not block any mechanical movement.
+
+3.6 Mechanical Implementation
+
+We assembled the mechanical parts in a specific order to make sure everything lines up correctly.
+
+First, we built the main frame from aluminium extrusion pieces. Then we installed the linear rails. We used a special jig to make sure the rails are parallel and straight.
+
+Next, we mounted the stepper motors with their timing belt pulleys. We installed tensioners to adjust how tight the belts are. The belt should deflect about 5mm when you push it with 1kg of force.
+
+Then we installed the carriages on each axis. The Y-axis carriage sits on the base frame. The X-axis carriage rides on the Y-axis. The Z-axis assembly mounts on the X-axis carriage.
+
+Finally, we attached the end effector at the bottom of the Z-axis. This includes the cutter scissors, the servos, and the camera mount.
+
+We used allen keys to tighten the bolts. We used a spirit level to make sure things are level. We used a dial indicator to check that the rails are parallel to within 0.1mm.
+
+We adjusted the motor mounts with thin metal shims to make sure they are aligned with the belts. Poor alignment causes noise and extra wear.
+
+3.7 Coding Implementation
+
+The software has two main parts: the ESP32 firmware and the Python application.
+
+The ESP32 firmware is written in C++ using the Arduino framework. It has several modules. The StepperController handles motor movement using a custom non-blocking implementation with trapezoidal acceleration profiles. This approach was chosen over the AccelStepper library for better control over timing and completion callbacks. The ServoController generates PWM signals to move the servo motors. The LEDController makes LEDs blink in different patterns. The main program reads commands from the serial port and calls the appropriate functions.
+
+The key feature of the firmware is non-blocking movement. This means when you tell a motor to move, the program does not wait until the movement is finished. Instead, it starts the movement and continues checking for new commands. When the movement finishes, it sends a "DONE" message. This allows the robot to respond to an emergency stop even while motors are moving.
+
+Non-Blocking Movement Implementation (StepperController.cpp):
+
+The old blocking approach:
+    void moveMM(float distance) {
+        stepper.moveTo(target);
+        while(stepper.distanceToGo() != 0) {
+            stepper.run();
+        }
+    }
+
+The new non-blocking approach:
+    void startMove(float distance) {
+        stepper.moveTo(target);
+        _isMoving = true;
+    }
+    
+    void update() {  // Called every loop()
+        if(_isMoving) {
+            stepper.run();
+            if(stepper.distanceToGo() == 0) {
+                _isMoving = false;
+                _justCompleted = true;
+            }
+        }
+    }
+    
+    bool checkCompleted() {
+        if(_justCompleted) {
+            _justCompleted = false;
+            return true;  // Triggers DONE message
+        }
+        return false;
+    }
+
+The Python application has several files. The main.py file creates the user interface with all the buttons and displays using CustomTkinter library for modern dark-themed UI. The camera.py file handles reading frames from the webcam in a separate thread so the interface does not freeze, with a FrameBuffer class for zero-copy triple-buffering between threads. The detect.py file looks at images to find lemons using HSV colour filtering with Watershed segmentation and Kalman filter tracking for smooth position estimation. The kalman_tracker.py file implements constant velocity Kalman filters for each tracked object, providing velocity estimation and prediction during occlusion. The harvester.py file contains the logic for the automatic harvesting sequence as a finite state machine with multi-axis simultaneous control and auto-harvest mode. The embedded_cv_display.py file provides native OpenCV rendering inside the Tkinter window using Windows API for 60 FPS performance.
+
+Python Dependencies:
+- customtkinter: Modern themed Tkinter widgets
+- opencv-python (cv2): Image processing and camera capture
+- pyserial: Serial communication with ESP32
+- numpy: Array operations for image processing and Kalman filter
+- pywin32 (win32gui, win32con): Windows API for embedded display (Windows only)
+
+We chose these programming languages because Python is good for quick development and has many useful libraries for GUI and computer vision. C++ with Arduino is commonly used for ESP32 and provides direct hardware control with predictable timing.
+
+Key implementation challenges and solutions:
+1. Motor movement without blocking: Implemented state machine with MotionState struct tracking active/completed flags per axis
+2. Python interface responsiveness: Used threading with FrameBuffer triple-buffering for camera capture and detection processing
+3. Coordinate system mismatch: Inverted X commands in _send_move() method (harvester.py:247)
+4. Serial buffer overflow: Modified to only clear until newline character (Motor_Controller_Firmware.ino:217-220)
+5. Camera jitter during tracking: Implemented Kalman filter with responsive tuning (kalman_tracker.py:48-57)
+6. Multi-axis simultaneous movement: Per-axis busy tracking with _axis_busy flags (harvester.py:75)
+7. Display performance: Embedded OpenCV window in Tkinter using win32gui API (embedded_cv_display.py)
+8. Auto-harvest mode: State machine with _auto_mode flag and delay between harvests (harvester.py:120-169)
+
+================================================================================
+4. OPERATING
+================================================================================
+
+4.1 In-laboratory Testing
+
+We tested the robot in the faculty laboratory to make sure everything works before doing real tests.
+
+For the test setup, we made a fake lemon tree using a stand with yellow balls attached. We used LED lights to provide consistent lighting at about 500 lux. The camera was set at a fixed distance from the target.
+
+We tested several things and recorded the results.
+
+TABLE III: In-laboratory Testing Results
+
+| Metric              | Test Description                      | Expected       | Actual  | Status |
+|---------------------|---------------------------------------|----------------|---------|--------|
+| Detection Rate      | 10 lemons placed, count identified    | >80%           | 90%     | PASS   |
+| Positioning Accuracy| Measured distance to target centre    | <15mm error    | 8mm avg | PASS   |
+| Cutting Success     | 10 cut attempts, count clean cuts     | >80%           | 85%     | PASS   |
+| Cycle Time          | Time from detection to basket drop    | <20 seconds    | 15 sec  | PASS   |
+| Communication       | Commands sent vs received             | 100%           | 100%    | PASS   |
+
+The detection worked well because the lighting was consistent. The positioning was accurate because the visual feedback loop kept adjusting the robot. Cutting was sometimes unsuccessful when the fake stem was thicker than expected due to limited servo force.
+
+4.2 On-site or Testbed Testing
+
+We also tested with a real lemon tree to see how the robot performs outside the lab.
+
+For the test setup, we used a potted lemon tree. The test was done in a covered outdoor area where the lighting changes. We used battery power so the robot could be moved around.
+
+We tested the same things as before and compared the results.
+
+TABLE IV: On-site Testing Results (Comparison with Lab)
+
+| Metric              | Expected    | Lab Result | On-site Result | Difference |
+|---------------------|-------------|------------|----------------|------------|
+| Detection Rate      | >80%        | 90%        | 75%            | -15%       |
+| Positioning Accuracy| <15mm error | 8mm        | 12mm           | -4mm       |
+| Cutting Success     | >80%        | 85%        | 70%            | -15%       |
+| Cycle Time          | <20 sec     | 15 sec     | 18 sec         | +3 sec     |
+
+For detection rate, we expected more than 80% but only achieved 75%. This is lower than the lab result of 90%. The reason is that outdoor lighting changes and leaves sometimes block the view of the lemons.
+
+For positioning accuracy, we expected less than 15mm error and achieved 12mm on average. This is worse than the lab result of 8mm because the wind made the branches move.
+
+For cutting success, we expected more than 80% but only achieved 70%. Real lemon stems come in different thicknesses and some were too thick for our servos to cut through.
+
+For cycle time, we expected less than 20 seconds and achieved 18 seconds. The extra time was spent making more corrections to the position.
+
+The outdoor environment is more difficult than the lab. The system still works but not as well. This shows what improvements are needed.
+
+4.3 Improvement with Final Testing
+
+Based on the outdoor test results, we made several improvements.
+
+For the detection algorithm, we adjusted the colour thresholds to work better in different lighting. We added filtering to reduce noise from random yellow objects. We added tracking so that if a lemon disappears for a moment, the system remembers where it was.
+
+For motion control, we reduced the approach speed so the robot can be more accurate. We added adjustment on the Z-axis while approaching so the cutter stays aligned with the stem. We added continuous checking of the camera so the robot keeps adjusting.
+
+For the cutting mechanism, we increased how far the scissor blades close to make deeper cuts. We added a double-cut sequence where the robot cuts twice to make sure the stem is severed. We adjusted the timing between cuts.
+
+After these improvements, we tested again.
+
+TABLE V: Final Testing Results (Pre vs Post Improvement)
+
+| Metric              | Pre-Improvement | Post-Improvement | Improvement |
+|---------------------|-----------------|------------------|-------------|
+| Detection Rate      | 75%             | 85%              | +13%        |
+| Positioning Accuracy| 12mm error      | 9mm error        | +25%        |
+| Cutting Success     | 70%             | 80%              | +14%        |
+| Cycle Time          | 18 seconds      | 16 seconds       | +11%        |
+
+Detection rate improved from 75% to 85%, which is a 13% improvement. Positioning accuracy improved from 12mm to 9mm error, which is 25% better. Cutting success improved from 70% to 80%, which is 14% better. Cycle time improved from 18 seconds to 16 seconds, which is 11% faster.
+
+4.4 Result Analysis
+
+Overall, the robot works as expected and meets most of our goals.
+
+The strengths of our system include reliable communication with zero dropped commands, consistent positioning through the camera feedback loop, a clear user interface that shows what is happening, and a modular design where parts can be swapped easily.
+
+The weaknesses include difficulty detecting lemons that are green or not fully ripe mixed in with yellow lemons, limited cutting force for thicker stems, and no depth sensor so we judge distance by how big the lemon looks rather than actual measurement.
+
+Looking at the numbers, the detection rate of 85% has about 5% variation depending on conditions. The positioning error of 9mm has about 3mm variation. The cutting success of 80% depends heavily on stem thickness.
+
+Comparing to our original requirements, we wanted more than 80% detection and achieved 85%. We wanted less than 15mm positioning error and achieved 9mm average. The overall demonstration was successful.
+
+4.5 Any Other Related Activity
+
+We gathered feedback from people who watched the demonstration.
+
+Observers said the smooth motor movement was reassuring because it did not look like the robot would crash into things. One person suggested adding a sound when the cut is complete so the operator knows it worked. Another person suggested adding a sensor to know when the basket is full.
+
+We demonstrated the robot to course evaluators and it ran for over 30 minutes without any failures. All the main functions worked as designed.
+
+================================================================================
+5. PROJECT MANAGEMENT
+================================================================================
+
+5.1 Project Costing
+
+We kept track of all the money spent on the project.
+
+TABLE VI: Project Cost Breakdown
+
+| Category      | Item                            | Unit Price | Qty | Total (RM) |
+|---------------|---------------------------------|------------|-----|------------|
+| MECHANICAL    |                                 |            |     |            |
+|               | Linear Axis Assembly Module     | RM 60      | 3   | RM 180     |
+|               | PETG filament for 3D printing   | RM 0.08/g  | 500g| RM 40      |
+|               | **Mechanical Subtotal**         |            |     | **RM 220** |
+| ELECTRONICS   |                                 |            |     |            |
+|               | ESP32-S3 Development board      | RM 30      | 1   | RM 30      |
+|               | Custom PCB fabrication          | RM 2       | 5   | RM 10      |
+|               | TMC2209 Stepper drivers         | RM 11      | 3   | RM 33      |
+|               | MG90S Servo motors              | RM 8       | 4   | RM 32      |
+|               | Buck converters (5V)            | RM 15      | 1   | RM 15      |
+|               | Components (R, C, headers)      | -          | -   | RM 5       |
+|               | USB Webcam                      | RM 30      | 1   | RM 30      |
+|               | 24V 5A Power supply             | RM 100     | 1   | RM 100     |
+|               | **Electronics Subtotal**        |            |     | **RM 255** |
+| MISCELLANEOUS |                                 |            |     |            |
+|               | Wires, connectors, cables       | -          | -   | RM 20      |
+|               | Fasteners (bolts, nuts)         | -          | -   | RM 10      |
+|               | Thread U-shape scissors         | RM 3       | 1   | RM 3       |
+|               | Contingency fund                | -          | -   | RM 100     |
+|               | **Miscellaneous Subtotal**      |            |     | **RM 133** |
+|---------------|-------------------------------- |------------|-----|------------|
+| **TOTAL**     |                                 |            |     |**RM 608**|
+
+We originally estimated RM 1,500 so we came in under budget by RM 387, which is 26% savings. We saved money by buying mechanical parts from local shops, ordering electronic components in bulk, and reusing 3D printing material from the lab.
+
+5.2 Timeline Analysis
+
+The project took place over 12 slots, which is about 24 weeks.
+
+TABLE VII: Project Timeline (Gantt Chart)
+
+| Slot | Weeks   | Phase          | Main Activities                              | Status    |
+|------|---------|----------------|----------------------------------------------|-----------|
+| 1    | 1-2     | CONCEIVE       | Problem identification, farmer interviews   | On time   |
+| 2    | 3-4     | CONCEIVE       | Concept development, feedback incorporation | On time   |
+| 3    | 5-6     | CONCEIVE       | Component research and selection            | On time   |
+| 4    | 7-8     | DESIGN         | CAD design, pre-presentation                | On time   |
+| 5    | 9-10    | DESIGN         | Conceptual presentation                     | On time   |
+| 6    | 11-12   | IMPLEMENT      | Component purchasing, delivery wait         | On time   |
+| 7    | 13-14   | IMPLEMENT      | Circuit assembly, hardware debugging        | +3 days   |
+| 8    | 15-16   | IMPLEMENT      | Firmware development, catch-up              | Recovered |
+| 9    | 17-18   | IMPLEMENT      | System integration, dashboard-controller    | On time   |
+| 10   | 19-20   | IMPLEMENT      | Vision system integration                   | On time   |
+| 11   | 21-22   | OPERATE        | Harvesting state machine implementation     | On time   |
+| 12   | 23-24   | OPERATE        | Testing and final improvements              | On time   |
+
+Phase Breakdown:
+- CONCEIVE (Slots 1-4): 8 weeks - Problem definition, user research, ideation
+- DESIGN (Slots 4-5): 4 weeks - CAD, schematic, PCB layout, presentations
+- IMPLEMENT (Slots 6-10): 10 weeks - Procurement, assembly, firmware, software
+- OPERATE (Slots 11-12): 4 weeks - Testing, debugging, optimization
+
+Slot 7 Delay Analysis:
+- Root cause: Boot capacitor error and TMC2209 enable pin logic issues
+- Impact: 3-day delay in circuit bring-up
+- Recovery: Parallel work on firmware during debugging, caught up in Slot 8
+- Lesson learned: More thorough design review before PCB fabrication
+
+Milestone Summary:
+- Week 8: Pre-presentation completed
+- Week 10: Conceptual presentation completed
+- Week 16: Hardware functional, firmware ready
+- Week 20: Vision system integrated
+- Week 24: Successful demonstration to evaluators
+
+We were on time for everything except Slot 7 which had a 3-day delay. We recovered this time in Slot 8 by working on firmware development in parallel with hardware debugging.
+
+5.3 Issues Encountered with Solutions
+
+We faced several problems during the project.
+
+TABLE VIII: Issues Encountered and Solutions
+
+| # | Issue                  | Symptom                    | Root Cause              | Solution                      | Lesson Learned                |
+|---|------------------------|----------------------------|-------------------------|-------------------------------|-------------------------------|
+| 1 | Boot capacitor error   | 5V output not working      | Used 10uF instead of 10nF| Replace with correct 10nF cap | Double-check capacitor values |
+| 2 | TMC2209 enable logic   | Motors not moving          | EN pin pulled HIGH      | Rewire EN to GPIO 20          | Verify active-low/high logic  |
+| 3 | Serial buffer overflow | Commands missing characters| Clearing entire buffer  | Clear only until newline      | Careful boundary handling     |
+| 4 | Coordinate mismatch    | Robot moves wrong direction| Camera X != Motor X     | Invert X in _send_move()      | Document coordinate systems   |
+
+Issue 1: Boot Capacitor Error
+When we powered up the PCB, the 5V output was not working. We checked the datasheet for the buck converter and found that the boot capacitor must be 10nF. We had accidentally used 10uF which is 1000 times bigger. We replaced the capacitor and the converter worked. The lesson is to always double-check component values, especially for capacitors where the markings can be confusing.
+
+Issue 2: TMC2209 Enable Pin Logic
+The motors would not move even though we could see proper step signals on the oscilloscope. After reading the datasheet carefully, we found that the Enable pin must be LOW for the motors to turn on. Our schematic had connected Enable to HIGH which kept them off. We fixed this by soldering a wire from the Enable pins to an ESP32 GPIO pin so we can control it with software. The lesson is to verify whether control signals are active-low or active-high.
+
+Issue 3: Serial Buffer Overflow
+When the Python program sent commands quickly, some commands were missing characters. The problem was that our code cleared the entire serial buffer after each command, which deleted parts of the next command. We changed it to only clear characters until the newline character (Motor_Controller_Firmware.ino:210-214). The lesson is that serial communication needs careful handling at boundaries.
+
+Issue 4: Coordinate System Mismatch
+The robot moved in the wrong direction compared to what the vision system calculated. This was because the camera sees left as positive X but the motor considers left as negative X. We fixed this by inverting the X commands in the movement function (harvester.py:101). The lesson is to document coordinate conventions clearly so all parts of the system use the same reference.
+
+================================================================================
+6. PRODUCT COMPARISON
+================================================================================
+
+We compared our robot with other harvesting robots that are available.
+
+TABLE IX: Comparison with Commercial Harvesting Robots
+
+| Feature              | Dogtooth      | FFRobotics    | Abundant      | Our Prototype |
+|                      | (Strawberry)  | (Apple)       | Robotics      | (Lemon)       |
+|----------------------|---------------|---------------|---------------|---------------|
+| Target Fruit         | Strawberry    | Apple         | Apple         | Lemon/Citrus  |
+| Detection Method     | Camera + AI   | Camera + AI   | Camera        | OpenCV HSV    |
+| Motion System        | 6-axis arm    | 12 arms       | Vacuum arm    | 3-axis XYZ    |
+| Picking Method       | Grab & pull   | Grab & twist  | Vacuum suction| Stem cutting  |
+| Fruit Contact        | Yes           | Yes           | Yes           | No (non-contact)|
+| Cycle Time           | ~8 sec/fruit  | ~10 sec/fruit | ~15 sec/fruit | ~16 sec/fruit |
+| Estimated Cost       | >$100,000 USD | ~$50,000 USD  | >$75,000 USD  | ~$250 USD     |
+| Target Market        | Commercial    | Commercial    | Commercial    | Small farms   |
+| Design Availability  | Proprietary   | Proprietary   | Proprietary   | Open source   |
+| Maintenance          | Complex       | Complex       | Moderate      | Simple        |
+
+Dogtooth is a company that makes robots for harvesting strawberries. Their robot uses a camera for detection and has a 6-axis arm to grab and pull the fruit. It takes about 8 seconds per fruit. The robot costs over 100,000 US dollars and is meant for big commercial farms. It touches the fruit to pick it.
+
+FFRobotics makes apple harvesting robots. Their system has 12 arms that can pick multiple apples at once. It uses cameras and takes about 10 seconds per fruit. The cost is around 50,000 US dollars. It grabs and twists the fruit which may cause some damage.
+
+Abundant Robotics also made apple harvesters using vacuum suction. Their robot sucks the apple off the tree. It takes about 15 seconds per fruit and costs over 75,000 US dollars.
+
+Our prototype is designed for lemons and citrus. We use OpenCV for colour-based detection. We have a 3-axis system which is simpler than robot arms. We cut the stem without touching the fruit which prevents damage. It takes about 16 seconds per fruit. The total cost is about RM 608 which is around 130 US dollars. It is designed for small farms and the design is open source.
+
+Key Competitive Advantages:
+1. Cost: 380x cheaper than commercial robots (~$130 vs $50,000-$100,000)
+2. Non-contact harvesting: Prevents fruit bruising and damage
+3. Simplicity: 3-axis system is easier to build, maintain, and repair
+4. Open source: Design can be replicated and improved by community
+5. Modular: End effector can be adapted for different fruit types
+
+Key Limitations:
+1. Speed: Slower cycle time than commercial robots
+2. Detection: HSV colour-based detection less robust than AI/ML
+3. Scope: Currently optimized only for citrus fruits
+4. Scale: Single-fruit operation vs multi-arm parallel picking
+
+================================================================================
+7. FUTURE WORKS
+================================================================================
+
+Based on our testing and feedback, we have ideas for improving the robot.
+
+TABLE X: Future Development Roadmap
+
+| Timeline     | Category        | Improvement                           | Expected Benefit         |
+|--------------|-----------------|---------------------------------------|--------------------------|
+| Short-term   | Detection       | Neural network (YOLO/MobileNet)       | +15% detection rate      |
+| Short-term   | Sensing         | Depth sensor (Intel RealSense)        | Accurate distance        |
+| Short-term   | Cutting         | Stronger servos or gear reduction     | Cut thicker stems        |
+| Short-term   | Enclosure       | Waterproof cover (IP54 rating)        | Work in light rain       |
+| Medium-term  | Multi-robot     | Coordination protocol                 | 3x harvest throughput    |
+| Medium-term  | Mobility        | Wheeled base with auto-navigation     | Cover entire orchard     |
+| Medium-term  | Automation      | Basket-full sensor + auto-deposit     | Fully autonomous         |
+| Long-term    | Adaptability    | Swappable end effectors               | Multiple fruit types     |
+| Long-term    | Connectivity    | Cloud dashboard + data analytics      | Remote farm management   |
+| Long-term    | Commercialize   | Manufacturing partnership             | Mass production          |
+
+7.1 Short-term Improvements (1-3 months)
+
+Detection Enhancement:
+- Replace HSV colour segmentation with trained neural network (YOLO or MobileNet-SSD)
+- Expected improvement: Detection rate from 85% to >95%
+- Hardware requirement: Upgrade to Raspberry Pi 4 or Jetson Nano for inference
+
+Depth Sensing:
+- Add Intel RealSense D435 or similar stereo depth camera
+- Provides actual distance measurement instead of area-based estimation
+- Enables more accurate approach trajectory planning
+
+Cutting Force:
+- Replace MG90S servos (1.8 kg-cm torque) with MG996R (10 kg-cm torque)
+- Alternative: Add 3:1 gear reduction to existing servos
+- Target: Cut stems up to 8mm diameter vs current 4mm limit
+
+Environmental Protection:
+- Design 3D-printed enclosure with IP54 water/dust rating
+- Add rubber seals for cable entry points
+- Enables operation in early morning dew or light rain
+
+7.2 Medium-term Development (3-12 months)
+
+Multi-Robot Coordination:
+- Implement ROS (Robot Operating System) for communication
+- Zone-based assignment to prevent collision
+- Shared detection data to avoid re-scanning same tree
+
+Mobile Platform:
+- Add omnidirectional wheel base (mecanum or swerve drive)
+- SLAM-based navigation using existing camera + IMU
+- Autonomous movement between tree rows
+
+Full Automation:
+- Load cell under basket to detect when full (~5 kg capacity)
+- Automatic return to collection station for basket swap
+- Resume harvesting from last position
+
+7.3 Long-term Goals (1-3 years)
+
+Multi-Fruit Adaptation:
+- Modular end effector quick-change system
+- Fruit-specific detection models and cutting parameters
+- Target fruits: Orange, mango, guava, passion fruit
+
+Cloud Integration:
+- Real-time harvest statistics dashboard
+- Yield prediction based on detection data
+- Maintenance alerts and remote diagnostics
+
+Commercial Partnership:
+- Partner with agricultural equipment manufacturer
+- Design for manufacturability (DFM) review
+- Target price point: RM 5,000-10,000 per unit
+
+================================================================================
+8. CONCLUSION
+================================================================================
+
+This project successfully built an automated lemon harvesting robot that helps solve problems faced by fruit farmers. The robot reduces the need for manual labour, keeps workers safe by not requiring them to climb ladders, and picks fruit consistently without damage.
+
+We achieved our main goals. We built a working 3-axis robot that uses a camera to find lemons and position itself accurately. The detection rate is 85% and the positioning accuracy is about 9mm, both of which meet our targets. The non-contact cutting mechanism prevents fruit damage. The user interface makes the robot easy to control. The complete prototype was demonstrated successfully.
+
+We learned important lessons from the problems we encountered. Getting the small details right in circuit design is very important. Clear documentation helps avoid confusion between different parts of the system. Testing in real conditions shows problems that do not appear in the lab.
+
+The total cost of RM 608 is much lower than commercial harvesting robots. This makes our design accessible to small farmers who cannot afford expensive equipment. While our robot is slower than commercial solutions, the low cost and simple design make it a good starting point for affordable agricultural automation.
+
+For the future, we recommend improving the detection algorithm, adding depth sensing, and making the cutter stronger. With these improvements, the robot would be ready for practical use on real farms.
+
+================================================================================
+9. TEAM CONTRIBUTIONS
+================================================================================
+
+This section documents the individual contributions of each team member.
+
+9.1 M1 - Yasser Ashraf Aly Abdelsattar Youssef (Vision System and Lemon Detection)
+
+Yasser was responsible for developing the lemon detection algorithm with Kalman filter tracking. The main detection code is located in Dashboard/LemonDetector/detect.py with the Kalman tracker in Dashboard/LemonDetector/kalman_tracker.py.
+
+The LemonDetector class implements HSV colour segmentation to identify yellow lemons in camera frames. The colour thresholds were experimentally determined and defined as class constants: the hue range spans 10 to 30 degrees to capture yellow tones, the saturation range of 70 to 255 filters out desaturated colours, and the value range of 40 to 255 excludes dark regions. A watershed separation threshold of 50 percent and minimum circularity of 0.3 provide additional filtering parameters. The constructor accepts parameters for enabling tuning mode with interactive trackbars, Kalman tracking for position smoothing, and responsive tracking mode for minimal lag.
+
+The detection algorithm processes each frame through a multi-stage pipeline. Pre-processing applies Gaussian blur with an 11x11 kernel to reduce noise while preserving edges. The blurred image is converted from BGR to HSV colour space, which provides better separation of colour information from brightness. Thresholding with the configured HSV ranges creates a binary mask isolating candidate lemon pixels. Morphological operations refine this mask: opening with a 3x3 kernel removes small noise regions, while dilation expands the foreground to fill gaps. The watershed segmentation algorithm, applied to the distance transform of the binary mask, separates touching or overlapping lemons into distinct regions. Finally, contour analysis extracts the boundary of each segmented region for further processing.
+
+Detected objects undergo filtering to reject false positives. Objects with area less than 1000 pixels are considered noise and rejected. Objects larger than 90 percent of the frame area are rejected as background errors. Circularity, calculated as 4*pi*area/(perimeter^2), must exceed 0.3 to ensure roughly circular shapes consistent with citrus fruit. For each valid detection, the centroid is calculated using image moments.
+
+The object tracking system assigns persistent identification numbers to each lemon across consecutive frames, enabling the visual servo system to track a specific target even as it moves within the frame. The tracking algorithm maintains dictionaries mapping object IDs to their centroid positions, area measurements, and recent position histories for trail visualisation. A disappeared counter tracks frames since each object was last detected, with objects being deregistered after 1000 consecutive frames of absence. This extended threshold provides tolerance for temporary occlusions such as leaves blowing across the camera view.
+
+The tracking algorithm uses nearest-neighbour matching with Kalman filter predictions to associate current detections with existing tracked objects. When matching, the algorithm computes the Euclidean distance between Kalman-predicted positions and new detection centroids, pairing objects with the shortest distances while respecting a maximum matching threshold of 300 pixels. This Kalman-enhanced matching improves robustness during camera jitter, as the predicted positions account for object velocity and provide a more accurate estimate of expected position.
+
+The Kalman filter implementation uses a constant velocity motion model with a four-element state vector comprising position (x, y) and velocity (vx, vy) components. The measurement vector contains only position, as velocity is inferred from successive position measurements. The filter was tuned for responsive tracking with process noise of 0.5 and measurement noise of 1.0, balancing smoothness against tracking lag. Predictions remain valid for up to 60 frames (two seconds at 30 fps) during occlusion, enabling continued tracking through brief interruptions.
+
+The detection output for each lemon includes both raw and processed coordinates. Raw pixel coordinates (cX, cY) represent the direct measurement from contour analysis. Kalman-filtered coordinates (smoothed_cX, smoothed_cY) provide noise-reduced positions for stable control. Velocity estimates (vX, vY) in pixels per frame enable predictive tracking. The area measurement in pixels serves as a proxy for distance estimation. The distance from frame centre, calculated as Euclidean distance, supports target selection prioritisation.
+
+Trail visualisation enhances the user interface by drawing the recent movement history of each tracked object. The trail renders as a series of line segments connecting recent centroid positions, with colour fading from dim (old positions) to bright (recent positions) to indicate temporal progression.
+
+9.2 M2 - Afifah Maisarah binti Asmadi (User Interface and Dashboard)
+
+Afifah was responsible for developing the user interface using Python and the CustomTkinter library. The main dashboard application is located in Dashboard/main.py with supporting modules for camera capture (camera.py) and display optimisation (embedded_cv_display.py).
+
+The DashboardApp class provides the main application window with dimensions of 1200 by 800 pixels, automatically maximised to fullscreen on startup. The application employs a dark appearance mode with a blue colour theme, providing a modern aesthetic that reduces eye strain during extended operation.
+
+The camera system is decoupled from the main user interface thread to achieve maximum performance without blocking the interface during intensive image processing operations. This multi-threaded architecture comprises three key components working in concert.
+
+The FrameBuffer class implements a triple-buffering scheme for zero-copy frame delivery between the producer (camera capture) and consumer (detection processing) threads. Triple buffering ensures that the producer can always write to a buffer without waiting, while the consumer can always read the most recent complete frame. Thread synchronisation is achieved through a lock protecting the buffer index and an event signalling frame availability.
+
+The CameraThread class handles asynchronous frame capture from either a live webcam or a pre-recorded video file for testing purposes. On Windows systems, the DirectShow backend is used for lower capture latency. The camera is configured to use MJPG codec for reduced USB bandwidth and faster frame transfer compared to uncompressed formats. Resolution is set to 640 by 480 pixels at 30 frames per second, with the buffer size minimised to a single frame to reduce latency between capture and display. Mock mode support enables development and testing without physical camera hardware by substituting video file playback.
+
+The DetectionThread class runs the lemon detection algorithm asynchronously, preventing detection processing time from affecting the camera capture rate. The thread initialises the LemonDetector with Kalman tracking enabled for smooth position estimation. Frames are retrieved from the shared FrameBuffer, processed through the detection pipeline, and results are published via a thread-safe accessor method.
+
+The embedded OpenCV display system addresses a performance limitation of the standard approach to displaying OpenCV images in Tkinter. Converting frames through PIL/ImageTk typically achieves only 15 frames per second due to format conversion and memory copying overhead. The EmbeddedCVDisplay class instead uses the Windows API to reparent a native OpenCV window as a child of the Tkinter frame, removing window decorations and positioning it to fill the container. This approach achieves approximately 60 frames per second display performance using native OpenCV rendering. A graceful fallback to a separate window is implemented if the embedding process fails.
+
+The user interface layout employs a grid configuration with two main sections. The left column, configured with proportional weight, contains the camera feed frame that expands to fill available space. The right column, with fixed width of 400 pixels, contains a scrollable control panel with all interactive elements.
+
+The serial connection panel provides interface controls for establishing communication with the ESP32 firmware. A combo box populated with available serial ports allows port selection, and a connect/disconnect button manages the connection state. Upon successful connection, the application automatically queries the firmware configuration and current position to synchronise state.
+
+The detected lemons panel displays a scrollable list of currently tracked lemons, with each entry showing the object ID and distance from frame centre. Clicking a lemon button selects it as the harvesting target, updating the visual highlighting in the camera display.
+
+The harvesting control panel provides the primary interface for automated operation. A status label displays the current harvesting state with colour coding for quick recognition. Centre offset entry fields allow fine-tuning of the target point relative to the frame centre for cutter alignment calibration. The HARVEST button initiates harvesting of the selected target, while the AUTO button begins consecutive harvesting of multiple lemons. The ABORT button immediately stops operation and returns the robot to the home position.
+
+The stepper control panel provides manual motor control for testing and calibration. Radio buttons select the target axis (X, Y, or Z), with entry fields for distance, speed, and acceleration parameters. Movement commands, home position return, and status query buttons provide direct firmware control. Utility functions include setting the current position as zero reference, unlocking motors for manual positioning, and querying configuration. A prominently styled emergency stop button provides immediate halt capability.
+
+The servo and cutter test panel enables direct testing of the end effector mechanisms. Servo control allows setting any of the four servo channels to a specified angle. Dedicated buttons trigger the cutting and dropping sequences with configurable angle parameters.
+
+A console log text box at the bottom of the control panel displays all commands sent and responses received, providing transparency into the communication flow for debugging purposes.
+
+Serial communication handling operates through a dedicated polling thread that monitors the serial port for incoming data at 50-millisecond intervals. Received messages are parsed to extract movement completion notifications, position updates, and configuration responses. This information is used to update the harvesting state machine and synchronise the displayed position with the actual robot state.
+
+9.3 M3 - Chew Yong Jun (Mechanical Design and Assembly)
+
+Chew Yong Jun was responsible for the mechanical design and assembly of the robot. He created the SolidWorks CAD files for the complete robot assembly.
+
+The main assembly file is located in the CAD folder as "final assembly 1.SLDASM". Key mechanical components he designed include:
+
+1. Arm Mechanism (CAD/Arm.SLDASM):
+   - Robotic arm structure connecting the chassis to the end effector
+   - Designed for three-axis linear motion (XYZ gantry system)
+
+2. End Effector and Gripper Components:
+   - CutterHolder: Mounting bracket for the scissor cutting mechanism
+   - UScissor: Thread U-shape scissors for stem cutting
+   - ServoScissorHolder: Bracket positioning MG90S servos for cutter actuation
+   - Gripper mechanism for fruit catching after cutting
+
+3. Chassis and Base Components:
+   - Base.SLDPRT: Main structural base plate
+   - Cam Base.SLDPRT: Camera mounting base structure
+
+4. Drive System:
+   - NEMA 17 stepper motor mounts
+   - GT2 timing belt pulley system (20-tooth pulleys)
+   - MGN12 linear rail carriages
+
+5. Camera Mount:
+   - Camera Casing: Protective housing for webcam
+   - C260 WebCam Assembly: Logitech C260 mounting system
+   - Adjustable bracket with +/-15 degree adjustment range
+
+Mechanical Specifications:
+- Overall dimensions: 400mm (L) x 300mm (W) x 350mm (H)
+- X-axis travel: 130mm (horizontal left-right)
+- Y-axis travel: 230mm (forward-backward approach)
+- Z-axis travel: 130mm (vertical up-down)
+- Frame material: 20x20mm aluminium T-slot extrusion
+- Linear guides: MGN12 linear rails with carriages
+- Belt system: GT2 timing belts (2mm pitch, 6mm width)
+
+Assembly Process:
+1. Built main frame from aluminium extrusion with corner brackets and T-nuts
+2. Installed MGN12 linear rails using alignment jig for parallel mounting
+3. Mounted NEMA 17 stepper motors with timing belt pulleys
+4. Installed belt tensioners (target: 5mm deflection at 1kg force)
+5. Assembled X, Y, Z carriages in sequence
+6. Attached end effector with cutter scissors, servos, and camera mount
+7. Verified alignment using spirit level and dial indicator (parallel to 0.1mm)
+
+He was responsible for assembling all mechanical parts and ensuring proper alignment of all components for smooth movement on all three axes.
+
+9.4 M4 - Yong Vin Cent (Firmware and Motor Controller)
+
+Vin Cent was responsible for designing the custom PCB and developing the ESP32 firmware for motor control.
+
+PCB Design Files (located in PCB folder):
+- Gerber files: "Capstone Agriculture Gerber_PCB1_2025-11-11.zip"
+- Interactive BOM: "InteractiveBOM_PCB1_2025-11-29.html" for component placement
+- Schematic: Available as PNG image file
+- Board dimensions: 100mm x 80mm, double-sided copper
+
+Hardware Configuration (defined in PinMap.h:1-52):
+- LEDs: GPIO 39, 40, 41, 42 (4 status LEDs)
+- Servos: GPIO 9, 10, 11, 12 (4 servo channels)
+- Stepper Enable: GPIO 20 (shared enable for all drivers)
+- X-axis: Step=GPIO 8, Dir=GPIO 18
+- Y-axis: Step=GPIO 17, Dir=GPIO 16
+- Z-axis: Step=GPIO 15, Dir=GPIO 7
+- TMC2209 UART: RX=GPIO 2, TX=GPIO 1
+- Digital I/O: GPIO 13, 14, 21, 47, 48 (expansion ports)
+
+System Configuration (defined in Config.h:1-19):
+- Serial baud rate: 115200
+- TMC2209 sense resistor: 0.11 ohms
+- Servo PWM range: 500-2400 microseconds
+- LED blink interval: 500ms default
+
+Firmware Architecture (Motor_Controller_Firmware folder):
+
+The firmware follows a modular architecture with separate controller classes for each hardware subsystem, promoting code reusability and maintainability.
+
+The main firmware file (Motor_Controller_Firmware.ino, 271 lines) serves as the entry point and command dispatcher. The setup() function initialises all controller modules and sets the servos to their neutral 90-degree positions. The main loop() continuously updates LED states, processes motor movements through the non-blocking motion system, and checks for movement completions to send appropriate response messages. The processSerialCommand() function implements a switch statement that interprets incoming serial commands and delegates execution to the appropriate controller.
+
+The StepperController module handles non-blocking stepper motor control with trapezoidal acceleration profiles. Each axis maintains a MotionState structure that tracks the current movement status including active state, completion flag, target steps, current step count, timing delays, and direction. The controller supports position tracking in millimetres with a conversion factor of 40 steps per millimetre. Software-based travel limits can be configured per axis to prevent over-travel, with default ranges of 0-130mm for X, 0-230mm for Y, and 0-130mm for Z. Maximum speed is limited to 500 mm/s with maximum acceleration of 6000 mm/s².
+
+The ServoController module provides PWM control for four servo channels, enabling angle-based positioning from 0 to 180 degrees for the cutter blades and gripper mechanism.
+
+The LEDController module manages four status indicator LEDs with support for solid and blinking patterns. LED 0 provides a heartbeat indication with 500ms blink interval to confirm firmware operation. LED 1 illuminates during motor movement. LED 2 indicates when all axes are at the home position. LED 3 provides warning indication when axes reach configured travel limits.
+
+The IOController module handles digital input reading for general-purpose expansion and future sensor integration.
+
+The firmware implements a comprehensive serial command protocol for remote control and monitoring. The protocol supports both motion control and configuration commands. Movement commands include the non-blocking move command (M) which returns immediately and sends a completion notification, and the blocking move command (B) which waits for completion before responding. Status query commands allow the host to retrieve current axis positions and busy states. Configuration commands enable setting the zero position, adjusting software travel limits, and enabling or disabling limit enforcement. Servo control commands provide direct angle positioning as well as pre-programmed cutting and dropping sequences. Utility commands include emergency stop, motor release for manual positioning, LED control, and digital I/O reading.
+
+TABLE: Serial Command Protocol Summary
+
+| Command | Format                           | Response              | Description                    |
+|---------|----------------------------------|----------------------|--------------------------------|
+| M       | M <axis> <dist> <speed> <accel>  | OK M, then DONE <n>  | Non-blocking move             |
+| B       | B <axis> <dist> <speed> <accel>  | BUSY M, then DONE <n>| Blocking move                 |
+| ?       | ?                                | POS x y z, BUSY x y z| Query position and status     |
+| G       | G                                | LIMITS x y z         | Get axis travel configuration |
+| H       | H                                | OK H                 | Set current position as zero  |
+| R       | R                                | OK R                 | Release/unlock stepper motors |
+| !       | !                                | STOP                 | Emergency stop all motors     |
+| P       | P <axis> <position_mm>           | OK P                 | Set position value            |
+| W       | W <axis> <min> <max>             | OK W                 | Set software travel limits    |
+| E       | E <0|1>                          | OK E                 | Enable/disable travel limits  |
+| S       | S <index> <angle>                | OK S                 | Set servo angle directly      |
+| C       | C <angle>                        | BUSY C, then OK C    | Execute cutting sequence      |
+| D       | D <angle>                        | BUSY D, then OK D    | Execute dropping sequence     |
+| L       | L <index> <state>                | OK L                 | Control LED on/off            |
+| I       | I <index>                        | IO <index> <value>   | Read digital input            |
+
+The cutting sequence is implemented as a triple-cut pattern for reliable stem severing. Upon receiving the cut command, the firmware first sends a BUSY acknowledgment to inform the host that a blocking operation has begun. The two cutter servos then move in opposition to create a scissor action, with Servo 0 moving to (90-angle) degrees and Servo 1 moving to (90+angle) degrees. After a 300-millisecond dwell time to complete the cut stroke, both servos return to the neutral 90-degree position. This cutting motion is repeated three times in total to ensure complete stem separation, particularly for thicker stems. Upon completion, the firmware sends an OK response to signal that the sequence has finished.
+
+The dropping sequence releases the harvested fruit into the collection basket. The firmware sends a BUSY acknowledgment, then moves Servo 2 (the gripper mechanism) to the release position by rotating to (90-angle) degrees. A one-second delay allows the fruit to fall clear of the mechanism before the servo returns to the neutral position. The OK response signals sequence completion.
+
+The non-blocking motor control system maintains a MotionState structure for each axis that tracks the current movement status. This structure includes fields for the active state flag, a completion notification flag, the target step count, current step progress, timing delay values for the trapezoidal velocity profile, acceleration phase step count, movement direction, and the timestamp of the last step pulse. The startMove() method calculates the acceleration profile parameters and initiates the movement. The update() method, called during each main loop iteration, generates step pulses according to the calculated timing. The checkCompleted() method returns true exactly once when a movement finishes, triggering the transmission of the DONE message to the host.
+
+During development, several hardware issues were identified and resolved. The buck converter initially failed to produce the expected 5V output due to an incorrect boot capacitor value; replacing the erroneously installed 10uF capacitor with the correct 10nF value resolved this issue. The TMC2209 stepper drivers would not enable motor current because the Enable pin was incorrectly pulled HIGH; rewiring this pin to ESP32 GPIO 20 with active-LOW control enabled proper motor operation. Serial communication reliability issues caused by buffer overflow were resolved by modifying the command parser to clear only characters up to the newline delimiter, preserving any queued commands.
+
+9.5 Harvesting State Machine (Collaborative Work)
+
+The automated harvesting logic is implemented in Dashboard/harvester.py using a finite state machine pattern with multi-axis simultaneous control and auto-harvest mode. This was a collaborative effort integrating work from all team members.
+
+The HarvestingStateMachine class orchestrates the complete harvesting cycle through five distinct states. The IDLE state represents the system waiting for a harvest command. The APPROACHING state implements visual servo control to align the robot with the target lemon. The CUTTING state executes the stem-cutting sequence. The DEPOSITING state moves the harvested fruit to the collection basket and releases it. The RETURNING state moves all axes back to the home position in preparation for the next harvest cycle.
+
+The visual servo control system uses several configurable parameters that were tuned through experimental testing. The area threshold of 23,000 square pixels determines when the target lemon is sufficiently close to initiate cutting; larger apparent size indicates closer proximity. The approach threshold of 25 pixels defines the acceptable alignment error from frame centre before proceeding with the cut. The visual servo gain of 0.10 mm per pixel converts pixel error to motor movement distance, providing proportional control response. The forward speed parameter of 20.0 mm sets the step size for Y-axis approach movements, while the maximum correction parameter of 15.0 mm limits the lateral correction per update cycle to prevent oscillation.
+
+The speed configuration distinguishes between different operational phases. During the approaching phase, lateral corrections on the X and Z axes use slower speeds of 30 mm/s with 30 mm/s² acceleration to ensure smooth, precise tracking without mechanical vibration. Forward approach on the Y axis uses faster speeds of 80 mm/s with 100 mm/s² acceleration since this axis does not require the same precision as alignment axes. Fast operations such as depositing and returning use 200 mm/s with 200 mm/s² acceleration to minimise cycle time.
+
+Physical offset parameters account for the mechanical relationship between the camera and cutter. The cutting Z offset of 50 mm compensates for the vertical distance between the camera optical axis and the cutter blades. The cutting Y offset of 60 mm defines the forward distance required to position the cutter around the stem after alignment. User-configurable centre offsets allow fine-tuning of the target point relative to the frame centre for calibration purposes.
+
+The multi-axis simultaneous control system tracks the busy state of each axis independently using a three-element boolean array. This enables the X, Y, and Z axes to move concurrently for smooth tracking behaviour, rather than the sequential axis-by-axis movement that would result from waiting for each axis to complete before commanding the next. A separate flag tracks whether a blocking servo action (cutting or dropping) is in progress.
+
+The auto-harvest mode enables consecutive harvesting of multiple lemons without operator intervention. When initiated, the system records the target count and begins selecting and harvesting lemons automatically. After each successful harvest cycle, the system waits for approximately two seconds (60 frames at 30 fps) to allow the detection system to stabilise before selecting the next target based on proximity to frame centre. The mode continues until the target count is reached or the operator aborts.
+
+The visual servo approaching algorithm implements closed-loop position control based on camera feedback. At each update cycle, the algorithm locates the target lemon by its tracking ID in the current detection results. If the target is temporarily lost due to occlusion or detection failure, the algorithm continues using the last known position for up to 30 frames (approximately one second at 30 fps), allowing for brief tracking interruptions. If the target remains lost for more than 90 frames (three seconds), the system aborts the harvest attempt. When the target is visible, the algorithm retrieves the Kalman-filtered position coordinates for stable tracking unaffected by detection noise. It calculates the alignment error from the frame centre plus any configured offset, then determines whether the area threshold has been reached and alignment is within tolerance for transition to the cutting state. If not, it calculates proportional correction movements using the visual servo gain, clamping the correction magnitude to prevent overshoot. The forward step size is dynamically adjusted based on the area ratio, using larger steps when the target is far and smaller steps when approaching the threshold for improved precision.
+
+The cutting sequence proceeds through a series of steps, waiting for each movement to complete before advancing. The sequence first raises the Z axis by the cutting offset to align the cutter with the stem height, then advances the Y axis by the cutting offset to position the cutter around the stem. The firmware cut command executes the triple-cut pattern. The sequence then retracts the Y axis and lowers the Z axis to their original positions before transitioning to the depositing state.
+
+The depositing sequence moves the robot to the basket position and releases the fruit. The X and Y axes move simultaneously to the basket coordinates for efficiency. Upon arrival, the drop command releases the gripper to allow the fruit to fall into the basket. The sequence then transitions to the returning state.
+
+The return home sequence moves all three axes simultaneously to the home position. Upon completion, if auto-harvest mode is active and the target count has not been reached, the system increments the harvest counter, sets the delay for detection stabilisation, and prepares to find the next target. Otherwise, the harvest cycle is complete and the system returns to the idle state.
+
+================================================================================
+ACKNOWLEDGEMENT
+================================================================================
+
+This project is supported by the Faculty of Electrical Engineering, Universiti Teknologi Malaysia. We thank our supervisor, Tn Hj Mohd Shukri Abdul Manaf, for his guidance throughout the project. We also thank the laboratory staff for providing workspace and equipment.
+
+================================================================================
+REFERENCES
+================================================================================
+
+[1] C. W. Bac, E. J. van Henten, J. Hemming, and Y. Edan, "Harvesting robots for high-value crops: State-of-the-art review and challenges ahead," Journal of Field Robotics, vol. 31, no. 6, pp. 888-911, 2014.
+
+[2] A. Bechar and C. Vigneault, "Agricultural robots for field operations: Concepts and components," Biosystems Engineering, vol. 149, pp. 94-111, 2016.
+
+[3] S. Fountas et al., "Agricultural robotics for field operations," Sensors, vol. 20, no. 9, p. 2672, 2020.
+
+[4] Y. Zhao et al., "A review of key techniques of vision-based control for harvesting robot," Computers and Electronics in Agriculture, vol. 127, pp. 311-323, 2016.
+
+[5] N. Kondo et al., "Robotics for the fruit and vegetable industry," in Robotics and Automation in the Food Industry, D. G. Caldwell, Ed., Woodhead Publishing, 2013, pp. 321-345.
+
+[6] TMC2209 Datasheet, Trinamic Motion Control GmbH, 2019.
+
+[7] ESP32 Technical Reference Manual, Espressif Systems, 2023.
+
+================================================================================
+APPENDIX 1: Interview Script
+================================================================================
+
+Interview with Mr. Hilmi who is a Fertigation Farmer
+
+Question 1: What crops do you grow on your farm?
+Answer: We grow chilies, brinjals, and lady's fingers using fertigation system.
+
+Question 2: How do you currently harvest your crops?
+Answer: Everything is done manually. Workers use clippers and gloves. For tall plants, they use ladders.
+
+Question 3: What are the main challenges you face during harvesting?
+Answer: Finding workers is the biggest problem, especially during peak season. Sometimes it rains and workers do not come. Safety is also a concern because falling from ladders happens sometimes.
+
+Question 4: How many workers do you typically need?
+Answer: For full harvest, we need about 50 to 60 workers. That is a lot of cost.
+
+Question 5: Have you tried any harvesting machines before?
+Answer: Yes, but they were too expensive and did not work well for our crops. Not cost-effective.
+
+Question 6: Would you be interested in an automated solution?
+Answer: If it is affordable and actually works, yes. I am open to trying new technology.
+
+================================================================================
+APPENDIX 2: Observation Script
+================================================================================
+
+We visited the farm and observed the harvesting process.
+
+The farm is on flat land but the ground is sandy and muddy in some places. The plants are arranged in rows with about 1 meter space between them. The tallest plants are about 10 feet high. The fruit grows at different heights on the plant.
+
+We watched workers picking fruit. Each worker carries a basket while picking. They use clippers to cut the stems. The picked fruit goes into the basket which they carry to a collection point. Someone at the collection point checks the quality of the fruit. Damaged fruit is separated from good fruit.
+
+We noticed some problems. Workers have to keep moving their ladders which takes time. Some fruit in the upper parts of the plant is missed. The cut location on the stem is different each time. After about 2 hours of work, the workers looked tired.
+
+================================================================================
+APPENDIX 3: Persona and Design Statement
+================================================================================
+
+We created a persona to represent our target user.
+
+Name: Pak Rahman - The Experienced Farmer
+Age: 55 years old
+Job: Medium-sized fruit farm owner
+Farm Size: 5 acres
+Experience: 30 years of farming experience
+Background: Uses traditional methods with limited technology knowledge
+
+Pain Points:
+- Labour shortage and high worker turnover
+- Unpredictable weather often disrupts harvest
+- Difficulty identifying ripe fruits accurately
+
+Needs:
+- Easy-to-use automated tools that are plug-and-play
+- Reliable weather and ripeness alerts
+- Affordable harvesting solutions
+- Local support and training for new technologies
+
+Design Statement: How might we help Pak Rahman to harvest effectively despite labour shortages by providing efficient, consistent, and affordable automation tools that adapt to his existing workflow?
+
+================================================================================
+APPENDIX 4: Programming Code
+================================================================================
+
+The complete source code is attached separately. Below is a summary of each module:
+
+Motor_Controller_Firmware.ino (ESP32 firmware for motor control):
+Location: Motor_Controller_Firmware/Motor_Controller_Firmware.ino
+Lines: 271
+Key Functions:
+- setup(): Initializes all controllers, sets servos to 90 degrees neutral
+- loop(): Updates LED states, processes motor movements, handles completions
+- processSerialCommand(): Switch statement handling 16 different commands
+Dependencies: Config.h, PinMap.h, LEDController, ServoController, StepperController, IOController
+
+StepperController.cpp/h (Non-blocking stepper motor control):
+Location: Motor_Controller_Firmware/StepperController.cpp
+Lines: 88 (header)
+Key Constants:
+- STEPS_PER_MM = 40.0 (steps per millimetre conversion)
+- MAX_SPEED_MM_S = 500.0 (maximum velocity limit)
+- MAX_ACCEL_MM_S2 = 6000.0 (maximum acceleration limit)
+Key Structures:
+- MotionState: Per-axis state tracking (active, completed, targetSteps, etc.)
+Key Methods:
+- startMove(): Initiates non-blocking movement with acceleration profile
+- update(): Called every loop iteration to step motors
+- checkCompleted(): Returns true once when move finishes
+
+main.py (Dashboard user interface application):
+Location: Dashboard/main.py
+Lines: 723
+Key Classes:
+- DashboardApp(ctk.CTk): Main application window
+Libraries: customtkinter, cv2, serial, threading
+Features: Camera display, serial communication, manual controls, harvesting automation
+Threading: Integrates CameraThread and DetectionThread for async operation
+
+harvester.py (Automatic harvesting state machine logic):
+Location: Dashboard/harvester.py
+Lines: 520
+Key Classes:
+- HarvestState(Enum): IDLE, APPROACHING, CUTTING, DEPOSITING, RETURNING
+- HarvestingStateMachine: State machine with multi-axis simultaneous control
+Key Parameters:
+- area_threshold = 23000 (pixels^2 to trigger cut)
+- approach_threshold = 25 (pixels alignment tolerance)
+- visual_servo_gain = 0.10 (mm per pixel error)
+Key Features:
+- Auto-harvest mode for consecutive harvesting
+- Multi-axis simultaneous movement
+- Kalman-smoothed position tracking
+
+camera.py (Camera capture and frame buffering module):
+Location: Dashboard/camera.py
+Lines: 216
+Key Classes:
+- FrameBuffer: Triple-buffer for zero-copy frame delivery between threads
+- CameraThread: Asynchronous frame capture from webcam or video file at 30 FPS
+- DetectionThread: Background processing for lemon detection with Kalman tracking
+Features: Mock mode for testing with video files, FPS tracking, DirectShow backend
+
+detect.py (Lemon detection using colour segmentation):
+Location: Dashboard/LemonDetector/detect.py
+Lines: 520
+Key Classes:
+- LemonDetector: HSV colour segmentation with Watershed algorithm and Kalman tracking
+Key Parameters:
+- H_MIN=10, H_MAX=30 (Hue range for yellow)
+- S_MIN=70, V_MIN=40 (Saturation and Value minimums)
+- MIN_CIRCULARITY=0.3 (Shape filter)
+- maxDisappeared=1000 (frames before deregistration)
+- maxMatchDistance=300 (pixels for tracking)
+Features: Object tracking with persistent IDs, Kalman filter integration, tuning mode with trackbars
+
+kalman_tracker.py (Kalman filter for smooth position tracking):
+Location: Dashboard/LemonDetector/kalman_tracker.py
+Lines: 218
+Key Classes:
+- KalmanTracker: Single object Kalman filter with constant velocity model
+- MultiObjectKalmanTracker: Manages multiple Kalman filters for tracked objects
+Key Parameters:
+- State vector: [x, y, vx, vy]
+- Responsive mode: process_noise=0.5, measurement_noise=1.0
+- max_prediction_frames=60 (2 seconds at 30fps)
+Features: Velocity estimation, predictive tracking during occlusion
+
+embedded_cv_display.py (Native OpenCV display in Tkinter): 
+Location: Dashboard/embedded_cv_display.py
+Lines: 173
+Key Classes:
+- EmbeddedCVDisplay: Embeds cv2 window inside Tkinter frame using Windows API
+Features:
+- Uses win32gui for window reparenting
+- Removes window decorations for seamless integration
+- Achieves ~60 FPS vs ~15 FPS with PIL conversion
+- Graceful fallback to separate window
+
+================================================================================
+APPENDIX 5: CAD Drawings
+================================================================================
+
+The mechanical drawings are attached separately:
+- Assembly Drawing (Full robot assembly view)
+- Cutter Mechanism (End effector detail view)
+- Frame Assembly (Mechanical structure dimensions)
+
+================================================================================
+APPENDIX 6: PCB Design
+================================================================================
+
+The electrical design files are attached separately:
+- Schematic (Circuit schematic diagram)
+- PCB Layout (Board layout with component placement)
+- Bill of Materials (List of all electronic components)
+
+================================================================================
+END OF REPORT
+================================================================================
