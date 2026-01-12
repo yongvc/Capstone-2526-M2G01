@@ -1,0 +1,37 @@
+# Reports (private, not for version control)
+Report/
+
+Video/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.opencode/
+.ruff_cache/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+tempCodeRunnerFile.py
