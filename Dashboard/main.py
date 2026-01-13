@@ -19,7 +19,7 @@ class DashboardApp(ctk.CTk):
         super().__init__()
 
         self.title("Motor Controller Dashboard")
-        self.geometry("1200x800")
+        self.geometry("1366x768")
 
         # Fullscreen
         self.after(0, lambda: self.state("zoomed"))
@@ -48,21 +48,22 @@ class DashboardApp(ctk.CTk):
         # Harvesting State Machine
         self.harvester = HarvestingStateMachine(self)
 
-        # Layout Configuration
+        # Layout Configuration - fixed width right panel
         self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=0)
+        self.grid_columnconfigure(1, weight=0, minsize=420)
         self.grid_rowconfigure(0, weight=1)
 
         # Left Frame: Camera (container for embedded OpenCV window)
         self.camera_frame = ctk.CTkFrame(self)
-        self.camera_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.camera_frame.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
         # Embedded OpenCV display (native performance)
         self.cv_display = EmbeddedCVDisplay(self.camera_frame, "Camera Feed")
 
-        # Right Frame: Controls
-        self.controls_frame = ctk.CTkScrollableFrame(self, width=400)
-        self.controls_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        # Right Frame: Controls (fixed, no scroll)
+        self.controls_frame = ctk.CTkFrame(self, width=420)
+        self.controls_frame.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+        self.controls_frame.grid_propagate(False)
 
         self.setup_controls()
 
@@ -74,258 +75,335 @@ class DashboardApp(ctk.CTk):
         self.after(500, self.update_camera_ui)
 
     def setup_controls(self):
-        # Connection Section
-        self.conn_frame = ctk.CTkFrame(self.controls_frame)
-        self.conn_frame.pack(fill="x", padx=10, pady=10)
+        """Setup control panel with clean, organized layout."""
+        # Configure grid - log box expands
+        self.controls_frame.grid_columnconfigure(0, weight=1)
+        self.controls_frame.grid_rowconfigure(5, weight=1)
 
+        row = 0
+        pad_x, pad_y = 8, 4
+
+        # ===== SECTION 1: Connection =====
+        conn_section = ctk.CTkFrame(self.controls_frame)
+        conn_section.grid(row=row, column=0, padx=pad_x, pady=(pad_y, 2), sticky="ew")
+        row += 1
+
+        # Title bar with status
+        title_row = ctk.CTkFrame(conn_section, fg_color="transparent")
+        title_row.pack(fill="x", padx=5, pady=(5, 2))
         ctk.CTkLabel(
-            self.conn_frame, text="Serial Connection", font=("Arial", 16, "bold")
-        ).pack(pady=5)
+            title_row,
+            text="CONNECTION",
+            font=("Arial", 11, "bold"),
+            text_color="#888888",
+        ).pack(side="left")
+        self.harvest_status_label = ctk.CTkLabel(
+            title_row, text="IDLE", font=("Arial", 11, "bold"), text_color="#00FF00"
+        )
+        self.harvest_status_label.pack(side="right")
+
+        # Connection controls
+        conn_row = ctk.CTkFrame(conn_section, fg_color="transparent")
+        conn_row.pack(fill="x", padx=5, pady=(0, 5))
 
         self.port_combo = ctk.CTkComboBox(
-            self.conn_frame, values=self.get_serial_ports()
+            conn_row, values=self.get_serial_ports(), width=110
         )
-        self.port_combo.pack(pady=5)
+        self.port_combo.pack(side="left", padx=(0, 3))
+
+        self.refresh_btn = ctk.CTkButton(
+            conn_row, text="↻", width=28, command=self.refresh_ports
+        )
+        self.refresh_btn.pack(side="left", padx=2)
 
         self.connect_btn = ctk.CTkButton(
-            self.conn_frame, text="Connect", command=self.toggle_connection
+            conn_row, text="Connect", width=65, command=self.toggle_connection
         )
-        self.connect_btn.pack(pady=5)
+        self.connect_btn.pack(side="left", padx=2)
 
-        # Detected Lemons Section (compact)
-        self.lemon_frame = ctk.CTkFrame(self.controls_frame)
-        self.lemon_frame.pack(fill="x", padx=10, pady=5)
-        ctk.CTkLabel(
-            self.lemon_frame, text="Detected Lemons", font=("Arial", 14, "bold")
-        ).pack(pady=3)
-
-        self.lemon_list_container = ctk.CTkScrollableFrame(self.lemon_frame, height=100)
-        self.lemon_list_container.pack(fill="x", padx=5, pady=3)
-
-        # ========== HARVESTING CONTROL SECTION ==========
-        self.harvest_frame = ctk.CTkFrame(self.controls_frame)
-        self.harvest_frame.pack(fill="x", padx=10, pady=5)
-        ctk.CTkLabel(
-            self.harvest_frame, text="Harvesting Control", font=("Arial", 14, "bold")
-        ).pack(pady=3)
-
-        # Status display
-        self.harvest_status_label = ctk.CTkLabel(
-            self.harvest_frame,
-            text="Status: IDLE",
-            font=("Arial", 12),
-            text_color="#00FF00",
-        )
-        self.harvest_status_label.pack(pady=3)
-
-        # Center offset controls (compact row)
-        offset_frame = ctk.CTkFrame(self.harvest_frame, fg_color="transparent")
-        offset_frame.pack(fill="x", padx=5, pady=2)
-
-        ctk.CTkLabel(offset_frame, text="Offset X:", width=50).pack(side="left")
-        self.offset_x_entry = ctk.CTkEntry(offset_frame, width=50)
-        self.offset_x_entry.insert(0, "0")
-        self.offset_x_entry.pack(side="left", padx=2)
-
-        ctk.CTkLabel(offset_frame, text="Y:", width=20).pack(side="left")
-        self.offset_y_entry = ctk.CTkEntry(offset_frame, width=50)
-        self.offset_y_entry.insert(0, "0")
-        self.offset_y_entry.pack(side="left", padx=2)
-
-        self.apply_offset_btn = ctk.CTkButton(
-            offset_frame, text="Apply", width=50, command=self.apply_offset
-        )
-        self.apply_offset_btn.pack(side="left", padx=5)
-
-        # Harvest buttons row
-        harvest_btn_row = ctk.CTkFrame(self.harvest_frame, fg_color="transparent")
-        harvest_btn_row.pack(fill="x", padx=5, pady=3)
-
-        self.start_harvest_btn = ctk.CTkButton(
-            harvest_btn_row,
-            text="▶ HARVEST",
-            fg_color="#228B22",
-            hover_color="#006400",
-            height=35,
-            font=("Arial", 12, "bold"),
-            command=self.start_harvest,
-        )
-        self.start_harvest_btn.pack(side="left", expand=True, fill="x", padx=2)
-
-        self.auto_harvest_btn = ctk.CTkButton(
-            harvest_btn_row,
-            text="▶▶ AUTO (3)",
-            fg_color="#1E90FF",
-            hover_color="#0066CC",
-            height=35,
-            font=("Arial", 12, "bold"),
-            command=self.start_auto_harvest,
-        )
-        self.auto_harvest_btn.pack(side="left", expand=True, fill="x", padx=2)
-
-        self.abort_harvest_btn = ctk.CTkButton(
-            harvest_btn_row,
-            text="⏹ ABORT",
-            fg_color="#8B0000",
-            hover_color="#B22222",
-            height=35,
-            font=("Arial", 12, "bold"),
-            command=self.abort_harvest,
-        )
-        self.abort_harvest_btn.pack(side="left", expand=True, fill="x", padx=2)
-
-        # Motor Control Section
-        self.motor_frame = ctk.CTkFrame(self.controls_frame)
-        self.motor_frame.pack(fill="x", padx=10, pady=5)
-
-        ctk.CTkLabel(
-            self.motor_frame, text="Stepper Control", font=("Arial", 14, "bold")
-        ).pack(pady=3)
-
-        # Axis Selection - horizontal
-        axis_row = ctk.CTkFrame(self.motor_frame, fg_color="transparent")
-        axis_row.pack(fill="x", padx=5, pady=5)
-        self.axis_var = ctk.StringVar(value="0")
-        ctk.CTkRadioButton(
-            axis_row, text="X", variable=self.axis_var, value="0", width=50
-        ).pack(side="left", expand=True)
-        ctk.CTkRadioButton(
-            axis_row, text="Y", variable=self.axis_var, value="1", width=50
-        ).pack(side="left", expand=True)
-        ctk.CTkRadioButton(
-            axis_row, text="Z", variable=self.axis_var, value="2", width=50
-        ).pack(side="left", expand=True)
-
-        # Parameters
-        self.dist_entry = self.create_labeled_entry(
-            self.motor_frame, "Distance (mm):", "10"
-        )
-        self.speed_entry = self.create_labeled_entry(
-            self.motor_frame, "Speed (mm/s):", "50"
-        )
-        self.accel_entry = self.create_labeled_entry(
-            self.motor_frame, "Accel (mm/s²):", "100"
-        )
-
-        # Move Buttons Row
-        move_row = ctk.CTkFrame(self.motor_frame, fg_color="transparent")
-        move_row.pack(fill="x", padx=5, pady=5)
-
-        self.move_btn = ctk.CTkButton(
-            move_row, text="Move", width=55, command=self.send_move_command
-        )
-        self.move_btn.pack(side="left", padx=2, expand=True)
-
-        self.center_btn = ctk.CTkButton(
-            move_row,
-            text="Center",
-            width=55,
-            fg_color="#228B22",
-            command=self.send_home_command,
-        )
-        self.center_btn.pack(side="left", padx=2, expand=True)
-
-        self.query_btn = ctk.CTkButton(
-            move_row, text="Status", width=55, command=self.send_query_command
-        )
-        self.query_btn.pack(side="left", padx=2, expand=True)
-
-        # Utility Buttons Row
-        util_row = ctk.CTkFrame(self.motor_frame, fg_color="transparent")
-        util_row.pack(fill="x", padx=5, pady=5)
-
-        self.zero_btn = ctk.CTkButton(
-            util_row, text="Set Zero", width=60, command=self.send_reset_command
-        )
-        self.zero_btn.pack(side="left", padx=2, expand=True)
-
-        self.unlock_btn = ctk.CTkButton(
-            util_row,
-            text="Unlock",
-            width=55,
-            fg_color="#666666",
-            command=self.send_release_command,
-        )
-        self.unlock_btn.pack(side="left", padx=2, expand=True)
-
-        self.config_btn = ctk.CTkButton(
-            util_row, text="Config", width=55, command=self.send_config_command
-        )
-        self.config_btn.pack(side="left", padx=2, expand=True)
-
-        # Stop Button
         self.stop_btn = ctk.CTkButton(
-            self.motor_frame,
-            text="⚠ EMERGENCY STOP",
-            fg_color="red",
-            hover_color="darkred",
-            height=35,
+            conn_row,
+            text="E-STOP",
+            width=55,
+            fg_color="#CC0000",
+            hover_color="#990000",
+            font=("Arial", 11, "bold"),
             command=self.emergency_stop,
         )
-        self.stop_btn.pack(pady=5, fill="x", padx=5)
+        self.stop_btn.pack(side="right")
 
-        # Servo / Cutter Control Section (compact)
-        self.servo_frame = ctk.CTkFrame(self.controls_frame)
-        self.servo_frame.pack(fill="x", padx=10, pady=5)
+        # ===== SECTION 2: Detected Lemons =====
+        lemon_section = ctk.CTkFrame(self.controls_frame)
+        lemon_section.grid(row=row, column=0, padx=pad_x, pady=2, sticky="ew")
+        row += 1
+
         ctk.CTkLabel(
-            self.servo_frame, text="Servo / Cutter", font=("Arial", 14, "bold")
-        ).pack(pady=3)
+            lemon_section,
+            text="TARGETS",
+            font=("Arial", 11, "bold"),
+            text_color="#888888",
+        ).pack(anchor="w", padx=5, pady=(5, 2))
 
-        # Combined servo/cut/drop row
-        servo_row = ctk.CTkFrame(self.servo_frame, fg_color="transparent")
-        servo_row.pack(fill="x", padx=5, pady=2)
+        self.lemon_list_container = ctk.CTkScrollableFrame(lemon_section, height=75)
+        self.lemon_list_container.pack(fill="x", padx=5, pady=(0, 5))
 
-        ctk.CTkLabel(servo_row, text="Servo#:", width=45).pack(side="left")
-        self.servo_index_entry = ctk.CTkEntry(servo_row, width=35)
-        self.servo_index_entry.insert(0, "0")
-        self.servo_index_entry.pack(side="left", padx=2)
+        # ===== SECTION 3: Harvest Control =====
+        harvest_section = ctk.CTkFrame(self.controls_frame)
+        harvest_section.grid(row=row, column=0, padx=pad_x, pady=2, sticky="ew")
+        row += 1
 
-        ctk.CTkLabel(servo_row, text="Ang:", width=30).pack(side="left")
-        self.servo_angle_entry = ctk.CTkEntry(servo_row, width=40)
-        self.servo_angle_entry.insert(0, "90")
-        self.servo_angle_entry.pack(side="left", padx=2)
+        ctk.CTkLabel(
+            harvest_section,
+            text="HARVEST",
+            font=("Arial", 11, "bold"),
+            text_color="#888888",
+        ).pack(anchor="w", padx=5, pady=(5, 2))
 
-        self.servo_btn = ctk.CTkButton(
-            servo_row, text="Set", width=40, command=self.set_servo
-        )
-        self.servo_btn.pack(side="left", padx=3)
+        # Main harvest buttons
+        harvest_btns = ctk.CTkFrame(harvest_section, fg_color="transparent")
+        harvest_btns.pack(fill="x", padx=5, pady=2)
+        harvest_btns.grid_columnconfigure((0, 1, 2), weight=1)
 
-        # Cut/Drop row
-        cut_drop_row = ctk.CTkFrame(self.servo_frame, fg_color="transparent")
-        cut_drop_row.pack(fill="x", padx=5, pady=2)
+        ctk.CTkButton(
+            harvest_btns,
+            text="▶ HARVEST",
+            height=34,
+            fg_color="#228B22",
+            hover_color="#1a6b1a",
+            font=("Arial", 12, "bold"),
+            command=self.start_harvest,
+        ).grid(row=0, column=0, padx=2, sticky="ew")
 
-        ctk.CTkLabel(cut_drop_row, text="Cut:", width=30).pack(side="left")
-        self.cut_angle_entry = ctk.CTkEntry(cut_drop_row, width=40)
-        self.cut_angle_entry.insert(0, "45")
+        ctk.CTkButton(
+            harvest_btns,
+            text="▶▶ AUTO",
+            height=34,
+            fg_color="#1976D2",
+            hover_color="#1565C0",
+            font=("Arial", 12, "bold"),
+            command=self.start_auto_harvest,
+        ).grid(row=0, column=1, padx=2, sticky="ew")
+
+        ctk.CTkButton(
+            harvest_btns,
+            text="■ ABORT",
+            height=34,
+            fg_color="#C62828",
+            hover_color="#B71C1C",
+            font=("Arial", 12, "bold"),
+            command=self.abort_harvest,
+        ).grid(row=0, column=2, padx=2, sticky="ew")
+
+        # Offset controls (smaller)
+        offset_row = ctk.CTkFrame(harvest_section, fg_color="transparent")
+        offset_row.pack(fill="x", padx=5, pady=(2, 5))
+
+        ctk.CTkLabel(offset_row, text="Offset:", width=45, anchor="w").pack(side="left")
+        ctk.CTkLabel(offset_row, text="X", width=12).pack(side="left")
+        self.offset_x_entry = ctk.CTkEntry(offset_row, width=40)
+        self.offset_x_entry.insert(0, "0")
+        self.offset_x_entry.pack(side="left", padx=2)
+        ctk.CTkLabel(offset_row, text="Y", width=12).pack(side="left")
+        self.offset_y_entry = ctk.CTkEntry(offset_row, width=40)
+        self.offset_y_entry.insert(0, "0")
+        self.offset_y_entry.pack(side="left", padx=2)
+        ctk.CTkButton(
+            offset_row, text="Set", width=35, height=24, command=self.apply_offset
+        ).pack(side="left", padx=5)
+
+        # ===== SECTION 4: Motor Control =====
+        motor_section = ctk.CTkFrame(self.controls_frame)
+        motor_section.grid(row=row, column=0, padx=pad_x, pady=2, sticky="ew")
+        row += 1
+
+        ctk.CTkLabel(
+            motor_section,
+            text="MOTOR CONTROL",
+            font=("Arial", 11, "bold"),
+            text_color="#888888",
+        ).pack(anchor="w", padx=5, pady=(5, 2))
+
+        # Row 1: Axis selection + Move
+        motor_row1 = ctk.CTkFrame(motor_section, fg_color="transparent")
+        motor_row1.pack(fill="x", padx=5, pady=2)
+
+        self.axis_var = ctk.StringVar(value="0")
+        for axis, label in [("0", "X"), ("1", "Y"), ("2", "Z")]:
+            ctk.CTkRadioButton(
+                motor_row1, text=label, variable=self.axis_var, value=axis, width=45
+            ).pack(side="left")
+
+        ctk.CTkLabel(motor_row1, text="mm:", width=28).pack(side="left", padx=(8, 0))
+        self.dist_entry = ctk.CTkEntry(motor_row1, width=50)
+        self.dist_entry.insert(0, "10")
+        self.dist_entry.pack(side="left", padx=2)
+
+        ctk.CTkLabel(motor_row1, text="spd:", width=28).pack(side="left")
+        self.speed_entry = ctk.CTkEntry(motor_row1, width=40)
+        self.speed_entry.insert(0, "50")
+        self.speed_entry.pack(side="left", padx=2)
+
+        ctk.CTkLabel(motor_row1, text="acc:", width=28).pack(side="left")
+        self.accel_entry = ctk.CTkEntry(motor_row1, width=40)
+        self.accel_entry.insert(0, "100")
+        self.accel_entry.pack(side="left", padx=2)
+
+        # Row 2: Action buttons (compact)
+        motor_row2 = ctk.CTkFrame(motor_section, fg_color="transparent")
+        motor_row2.pack(fill="x", padx=5, pady=(2, 5))
+        motor_row2.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
+
+        btn_h = 26
+        ctk.CTkButton(
+            motor_row2,
+            text="Move",
+            height=btn_h,
+            width=40,
+            command=self.send_move_command,
+        ).grid(row=0, column=0, sticky="ew", padx=2)
+        ctk.CTkButton(
+            motor_row2,
+            text="Home",
+            height=btn_h,
+            width=40,
+            fg_color="#228B22",
+            command=self.send_home_command,
+        ).grid(row=0, column=1, sticky="ew", padx=2)
+        ctk.CTkButton(
+            motor_row2,
+            text="Sync",
+            height=btn_h,
+            width=40,
+            command=self.send_query_command,
+        ).grid(row=0, column=2, sticky="ew", padx=2)
+        ctk.CTkButton(
+            motor_row2,
+            text="Zero",
+            height=btn_h,
+            width=40,
+            fg_color="#B8860B",
+            command=self.send_reset_command,
+        ).grid(row=0, column=3, sticky="ew", padx=2)
+        ctk.CTkButton(
+            motor_row2,
+            text="Unlock",
+            height=btn_h,
+            width=40,
+            fg_color="#555555",
+            command=self.send_release_command,
+        ).grid(row=0, column=4, sticky="ew", padx=2)
+
+        # ===== SECTION 5: Tools & Config =====
+        tools_section = ctk.CTkFrame(self.controls_frame)
+        tools_section.grid(row=row, column=0, padx=pad_x, pady=2, sticky="ew")
+        row += 1
+
+        ctk.CTkLabel(
+            tools_section,
+            text="TOOLS & CONFIG",
+            font=("Arial", 11, "bold"),
+            text_color="#888888",
+        ).pack(anchor="w", padx=5, pady=(5, 2))
+
+        # Cut/Drop test row with editable angles
+        test_row = ctk.CTkFrame(tools_section, fg_color="transparent")
+        test_row.pack(fill="x", padx=5, pady=2)
+
+        ctk.CTkLabel(test_row, text="Cut°", width=32).pack(side="left")
+        self.cut_angle_entry = ctk.CTkEntry(test_row, width=40)
+        self.cut_angle_entry.insert(0, str(self.harvester.cut_angle))
         self.cut_angle_entry.pack(side="left", padx=2)
-
-        self.cut_btn = ctk.CTkButton(
-            cut_drop_row,
-            text="Cut",
-            width=40,
+        ctk.CTkButton(
+            test_row,
+            text="✂ Test",
+            width=55,
+            height=26,
             fg_color="#8B4513",
+            hover_color="#6B3410",
             command=self.test_cut,
-        )
-        self.cut_btn.pack(side="left", padx=3)
+        ).pack(side="left", padx=(2, 10))
 
-        ctk.CTkLabel(cut_drop_row, text="Drop:", width=35).pack(side="left")
-        self.drop_angle_entry = ctk.CTkEntry(cut_drop_row, width=40)
-        self.drop_angle_entry.insert(0, "45")
+        ctk.CTkLabel(test_row, text="Drop°", width=38).pack(side="left")
+        self.drop_angle_entry = ctk.CTkEntry(test_row, width=40)
+        self.drop_angle_entry.insert(0, str(self.harvester.drop_angle))
         self.drop_angle_entry.pack(side="left", padx=2)
-
-        self.drop_btn = ctk.CTkButton(
-            cut_drop_row,
-            text="Drop",
-            width=40,
+        ctk.CTkButton(
+            test_row,
+            text="↓ Test",
+            width=55,
+            height=26,
             fg_color="#4682B4",
+            hover_color="#36648B",
             command=self.test_drop,
-        )
-        self.drop_btn.pack(side="left", padx=3)
+        ).pack(side="left", padx=(2, 10))
 
-        # Console/Log (compact)
-        self.log_box = ctk.CTkTextbox(self.controls_frame, height=100)
-        self.log_box.pack(fill="both", expand=True, padx=10, pady=5)
+        ctk.CTkButton(
+            test_row,
+            text="Query",
+            width=50,
+            height=26,
+            command=self.send_config_command,
+        ).pack(side="right")
+
+        # Config row
+        config_row = ctk.CTkFrame(tools_section, fg_color="transparent")
+        config_row.pack(fill="x", padx=5, pady=(2, 5))
+
+        ctk.CTkLabel(config_row, text="Area", width=35, anchor="w").pack(side="left")
+        self.area_thresh_entry = ctk.CTkEntry(config_row, width=55)
+        self.area_thresh_entry.insert(0, str(self.harvester.area_threshold))
+        self.area_thresh_entry.pack(side="left", padx=2)
+
+        ctk.CTkLabel(config_row, text="Z↑", width=22).pack(side="left")
+        self.z_offset_entry = ctk.CTkEntry(config_row, width=40)
+        self.z_offset_entry.insert(0, str(self.harvester.cutting_z_offset))
+        self.z_offset_entry.pack(side="left", padx=2)
+
+        ctk.CTkLabel(config_row, text="Y→", width=22).pack(side="left")
+        self.y_offset_entry = ctk.CTkEntry(config_row, width=40)
+        self.y_offset_entry.insert(0, str(self.harvester.cutting_y_offset))
+        self.y_offset_entry.pack(side="left", padx=2)
+
+        ctk.CTkButton(
+            config_row,
+            text="Apply",
+            width=50,
+            height=24,
+            command=self.apply_harvester_config,
+        ).pack(side="left", padx=5)
+
+        # ===== SECTION 6: Log (expands to fill) =====
+        log_section = ctk.CTkFrame(self.controls_frame)
+        log_section.grid(row=row, column=0, padx=pad_x, pady=(2, pad_y), sticky="nsew")
+        log_section.grid_rowconfigure(1, weight=1)
+        log_section.grid_columnconfigure(0, weight=1)
+
+        ctk.CTkLabel(
+            log_section, text="LOG", font=("Arial", 11, "bold"), text_color="#888888"
+        ).grid(row=0, column=0, sticky="w", padx=5, pady=(5, 2))
+
+        self.log_box = ctk.CTkTextbox(log_section, height=60)
+        self.log_box.grid(row=1, column=0, padx=5, pady=(0, 5), sticky="nsew")
         self.log_message("Dashboard Ready.")
+
+    def refresh_ports(self):
+        """Refresh serial port list."""
+        ports = self.get_serial_ports()
+        self.port_combo.configure(values=ports)
+        if ports:
+            self.port_combo.set(ports[0])
+
+    def apply_harvester_config(self):
+        """Apply harvester configuration from UI."""
+        try:
+            self.harvester.area_threshold = int(self.area_thresh_entry.get())
+            self.harvester.cutting_z_offset = int(self.z_offset_entry.get())
+            self.harvester.cutting_y_offset = int(self.y_offset_entry.get())
+            self.log_message(
+                f"Config: Area={self.harvester.area_threshold}, Z={self.harvester.cutting_z_offset}, Y={self.harvester.cutting_y_offset}"
+            )
+        except ValueError:
+            self.log_message("Invalid config values!")
 
     def create_labeled_entry(self, parent, text, default_val):
         frame = ctk.CTkFrame(parent, fg_color="transparent")
@@ -494,22 +572,29 @@ class DashboardApp(ctk.CTk):
             dist = int(lemon["dist"])
 
             is_selected = l_id == self.selected_lemon_id
-            new_color = "green" if is_selected else "#1f6aa5"
-            new_text = f"ID: {l_id} | Dist: {dist}px"
+            new_color = "#228B22" if is_selected else "#1F6AA5"
+            hover_color = "#1a6b1a" if is_selected else "#144F7C"
+            new_text = f"  ID: {l_id}   |   Dist: {dist}px"
 
             if l_id in self.lemon_buttons:
                 btn, old_text, old_color = self.lemon_buttons[l_id]
                 if old_text != new_text or old_color != new_color:
-                    btn.configure(text=new_text, fg_color=new_color)
+                    btn.configure(
+                        text=new_text, fg_color=new_color, hover_color=hover_color
+                    )
                     self.lemon_buttons[l_id] = (btn, new_text, new_color)
             else:
                 btn = ctk.CTkButton(
                     self.lemon_list_container,
                     text=new_text,
                     fg_color=new_color,
+                    hover_color=hover_color,
+                    height=30,
+                    anchor="w",
+                    font=("Consolas", 11, "bold"),
                     command=lambda i=l_id: self.select_lemon(i),
                 )
-                btn.pack(pady=2, fill="x")
+                btn.pack(pady=2, padx=2, fill="x")
                 self.lemon_buttons[l_id] = (btn, new_text, new_color)
 
         for l_id in list(self.lemon_buttons.keys()):
@@ -579,16 +664,27 @@ class DashboardApp(ctk.CTk):
         accel = self.accel_entry.get()
         cmd = f"M {axis} {dist} {speed} {accel}"
         self.send_command(cmd)
+        # Update position tracking for manual moves
+        # Note: Manual moves bypass limit checking - user is responsible
+        # X-axis is NOT inverted here as user enters raw firmware values
+        try:
+            axis_idx = int(axis)
+            dist_val = float(dist)
+            if 0 <= axis_idx <= 2:
+                # For X-axis, firmware receives inverted value, so we invert back
+                if axis_idx == 0:
+                    dist_val = -dist_val
+                self.harvester._current_pos[axis_idx] += dist_val
+        except ValueError:
+            pass  # Invalid input, skip position update
 
     def send_home_command(self):
-        """Move to home position (X center, Y=0, Z=0)."""
-        home = self.harvester.home_pos
-        # Move to home position from current position
-        self.send_command(f"M 0 {home[0] - self.harvester._current_pos[0]:.2f} 100 200")
-        self.send_command(f"M 1 {home[1] - self.harvester._current_pos[1]:.2f} 100 200")
-        self.send_command(f"M 2 {home[2] - self.harvester._current_pos[2]:.2f} 100 200")
-        self.harvester._current_pos = list(home)
-        self.log_message(f"Moving to home: X={home[0]}, Y={home[1]}, Z={home[2]}")
+        """Move to home position using proper limit-checked movement."""
+        if self.harvester.move_to_home():
+            home = self.harvester.home_pos
+            self.log_message(f"Moving to home: X={home[0]}, Y={home[1]}, Z={home[2]}")
+        elif self.harvester.is_position_known():
+            self.log_message("Already at home position")
 
     def send_query_command(self):
         """Query current position and status."""
@@ -601,45 +697,45 @@ class DashboardApp(ctk.CTk):
     def send_reset_command(self):
         """Reset position counter to 0,0,0."""
         self.send_command("H")
-        self.harvester._current_pos = [0, 0, 0]
+        self.harvester.reset_position()
         self.log_message("Position reset to 0,0,0")
 
     def send_release_command(self):
         """Release/disable steppers for manual movement."""
         self.send_command("R")
-        self.log_message("Steppers released - manual move OK")
+        self.harvester.invalidate_position()
+        self.log_message("Steppers released - query position after manual move")
+        # Auto-query position after a short delay to get current state
+        self.after(500, lambda: self.send_command("?"))
 
     def emergency_stop(self):
         """Emergency stop all motors."""
         self.send_command("!")
         self.harvester.abort()
-        self.log_message("EMERGENCY STOP")
-
-    def set_servo(self):
-        """Set servo to specified angle."""
-        try:
-            index = int(self.servo_index_entry.get())
-            angle = int(self.servo_angle_entry.get())
-            cmd = f"S {index} {angle}"
-            self.send_command(cmd)
-        except ValueError:
-            self.log_message("Invalid servo values!")
+        self.harvester.invalidate_position()
+        self.log_message("EMERGENCY STOP - position unknown")
+        # Query actual position from firmware after stop
+        self.send_command("?")
 
     def test_cut(self):
-        """Test cut sequence."""
+        """Test cut sequence - reads angle from entry and updates harvester config."""
         try:
             angle = int(self.cut_angle_entry.get())
+            self.harvester.cut_angle = angle  # Update harvester config
             cmd = f"C {angle}"
             self.send_command(cmd)
+            self.log_message(f"Test cut at {angle}°")
         except ValueError:
             self.log_message("Invalid cut angle!")
 
     def test_drop(self):
-        """Test drop sequence."""
+        """Test drop sequence - reads angle from entry and updates harvester config."""
         try:
             angle = int(self.drop_angle_entry.get())
+            self.harvester.drop_angle = angle  # Update harvester config
             cmd = f"D {angle}"
             self.send_command(cmd)
+            self.log_message(f"Test drop at {angle}°")
         except ValueError:
             self.log_message("Invalid drop angle!")
 
@@ -688,7 +784,7 @@ class DashboardApp(ctk.CTk):
                     x = float(parts[1])
                     y = float(parts[2])
                     z = float(parts[3])
-                    self.harvester._current_pos = [x, y, z]
+                    self.harvester.sync_position(x, y, z)
                 except ValueError:
                     pass
 

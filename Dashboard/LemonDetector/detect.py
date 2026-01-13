@@ -16,13 +16,13 @@ class LemonDetector:
         self.window_name = "Tuning"
 
         # Fixed values
-        self.FIXED_H_MIN = 10
-        self.FIXED_H_MAX = 30
+        self.FIXED_H_MIN = 20
+        self.FIXED_H_MAX = 40
         self.FIXED_S_MIN = 70
         self.FIXED_S_MAX = 255
-        self.FIXED_V_MIN = 40
+        self.FIXED_V_MIN = 60
         self.FIXED_V_MAX = 255
-        self.FIXED_SEP_THRESH = 50  # 0-100
+        self.FIXED_SEP_THRESH = 30  # 0-100
         self.MIN_CIRCULARITY = 0.3
 
         if self.tuning_mode:

@@ -197,6 +197,18 @@ void processSerialCommand() {
           delay(300);
           servoController.write(0, 90);
           servoController.write(1, 90);
+          delay(300);
+          servoController.write(0, 90-angle);
+          servoController.write(1, 90+angle);
+          delay(300);
+          servoController.write(0, 90);
+          servoController.write(1, 90);
+          delay(300);
+          servoController.write(0, 90-angle);
+          servoController.write(1, 90+angle);
+          delay(300);
+          servoController.write(0, 90);
+          servoController.write(1, 90);
           Serial.println("OK C");
         }
         break;

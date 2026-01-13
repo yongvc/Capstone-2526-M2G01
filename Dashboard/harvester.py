@@ -54,8 +54,8 @@ class HarvestingStateMachine:
         self.center_offset_y = 0  # positive = down
 
         # Cutter is 50mm below camera - move Z UP to cut
-        self.cutting_z_offset = 50  # mm (positive = up)
-        self.cutting_y_offset = 60  # mm (positive = forward)
+        self.cutting_z_offset = 55  # mm (positive = up)
+        self.cutting_y_offset = 55  # mm (positive = forward)
 
         # Axis lengths (mm) - configure to match your machine
         self.axis_length_x = 130  # X axis total travel
@@ -64,7 +64,7 @@ class HarvestingStateMachine:
 
         # Predefined positions - calculated from axis lengths
         self.home_pos = (self.axis_length_x / 2, 0, 60)
-        self.basket_pos = (self.axis_length_x / 2, 100, 80)
+        self.basket_pos = (self.axis_length_x / 2, 80, 60)
 
         # Cutting parameters
         self.cut_angle = 60
@@ -75,6 +75,7 @@ class HarvestingStateMachine:
         self._axis_busy = [False, False, False]  # X, Y, Z busy flags
         self._waiting_for_action = False  # For cut/drop operations
         self._current_pos = [0, 0, 0]
+        self._position_known = False  # True only after position sync from firmware
 
         # Smooth tracking parameters
         self._frames_lost = 0
@@ -102,11 +103,79 @@ class HarvestingStateMachine:
         self.home_pos = (x_max / 2, self.home_pos[1], self.home_pos[2])
         self.basket_pos = (x_max / 2, self.basket_pos[1], self.basket_pos[2])
 
+    def sync_position(self, x, y, z):
+        """Sync position from firmware - marks position as known."""
+        self._current_pos = [x, y, z]
+        self._position_known = True
+
+    def invalidate_position(self):
+        """Mark position as unknown (after release, e-stop, etc)."""
+        self._position_known = False
+
+    def is_position_known(self):
+        """Check if position is known/valid."""
+        return self._position_known
+
+    def query_position(self):
+        """Query position from firmware. Response handled by sync_position()."""
+        self.app.send_command("?")
+
+    def ensure_position_known(self):
+        """
+        Auto-query position if unknown.
+        Returns True if position is known, False if query was sent (wait for response).
+        """
+        if self._position_known:
+            return True
+        self.app.log_message("Position unknown - querying firmware...")
+        self.query_position()
+        return False
+
+    def reset_position(self):
+        """Reset position to zero - called after firmware reset."""
+        self._current_pos = [0, 0, 0]
+        self._position_known = True
+
+    def move_to_home(self):
+        """
+        Move to home position using proper _send_move with limits.
+        Returns True if moves were sent, False if already at home or busy.
+        Auto-queries position if unknown.
+        """
+        if not self._position_known:
+            self.app.log_message("Position unknown - querying before home move...")
+            self.query_position()
+            return False
+
+        moved = False
+        dx = self.home_pos[0] - self._current_pos[0]
+        dy = self.home_pos[1] - self._current_pos[1]
+        dz = self.home_pos[2] - self._current_pos[2]
+
+        if abs(dx) > 0.5:
+            self._send_move(0, dx)
+            moved = True
+        if abs(dy) > 0.5:
+            self._send_move(1, dy)
+            moved = True
+        if abs(dz) > 0.5:
+            self._send_move(2, dz)
+            moved = True
+
+        return moved
+
     def start(self, target_id):
         """Start harvesting sequence on the specified target."""
         if self.state != HarvestState.IDLE:
             self.app.log_message("Harvest already in progress!")
-            return
+            return False
+
+        if not self._position_known:
+            self.app.log_message(
+                "Position unknown - querying. Try again after position sync."
+            )
+            self.query_position()
+            return False
 
         self.target_id = target_id
         self.state = HarvestState.APPROACHING
@@ -116,12 +185,20 @@ class HarvestingStateMachine:
         self._last_target_area = 0
         self._reset_axis_busy()
         self.app.log_message(f"Starting harvest on target ID: {target_id}")
+        return True
 
     def start_auto(self, target_count=3):
         """Start auto-harvest mode to consecutively harvest multiple lemons."""
         if self.state != HarvestState.IDLE:
             self.app.log_message("Harvest already in progress!")
-            return
+            return False
+
+        if not self._position_known:
+            self.app.log_message(
+                "Position unknown - querying. Try again after position sync."
+            )
+            self.query_position()
+            return False
 
         self._auto_mode = True
         self._auto_target_count = target_count
@@ -237,6 +314,22 @@ class HarvestingStateMachine:
         if abs(distance_mm) < 0.5:
             return False
 
+        # Get axis limit for clamping
+        axis_limits = [self.axis_length_x, self.axis_length_y, self.axis_length_z]
+        axis_limit = axis_limits[axis]
+
+        # Calculate new position and clamp to [0, axis_limit]
+        current = self._current_pos[axis]
+        new_pos = current + distance_mm
+        clamped_pos = max(0, min(axis_limit, new_pos))
+
+        # Calculate actual distance after clamping
+        actual_distance = clamped_pos - current
+
+        # Skip if clamped distance is too small
+        if abs(actual_distance) < 0.5:
+            return False
+
         # Default to fast speed/accel
         if speed is None:
             speed = self.fast_speed
@@ -244,13 +337,13 @@ class HarvestingStateMachine:
             accel = self.fast_accel
 
         # Invert X axis (axis 0) because camera X positive is on frame left
-        send_dist = -distance_mm if axis == 0 else distance_mm
+        send_dist = -actual_distance if axis == 0 else actual_distance
 
         cmd = f"M {axis} {send_dist:.2f} {speed} {accel}"
         self.app.send_command(cmd)
 
-        # Update position tracking
-        self._current_pos[axis] += distance_mm
+        # Update position tracking with clamped distance
+        self._current_pos[axis] = clamped_pos
 
         # Mark axis as busy
         self._axis_busy[axis] = True
@@ -491,7 +584,15 @@ class HarvestingStateMachine:
                 self._step = 1
         elif self._step == 1:
             if self._is_all_axes_idle():
-                self._current_pos = list(self.home_pos)
+                # Position is already tracked by _send_move - no need to override
+                # Just verify we're close to home (within tolerance)
+                dx = abs(self.home_pos[0] - self._current_pos[0])
+                dy = abs(self.home_pos[1] - self._current_pos[1])
+                dz = abs(self.home_pos[2] - self._current_pos[2])
+                if dx > 1 or dy > 1 or dz > 1:
+                    self.app.log_message(
+                        f"Warning: Not at home pos (delta: X={dx:.1f}, Y={dy:.1f}, Z={dz:.1f})"
+                    )
 
                 # Check if auto mode - continue to next target
                 if self._auto_mode:
@@ -510,7 +611,7 @@ class HarvestingStateMachine:
                         self.state = HarvestState.IDLE
                         self.target_id = None
                         self._auto_delay_frames = (
-                            60  # Wait 2 seconds for detection to stabilize
+                            30  # Wait 1 second for detection to stabilize
                         )
                 else:
                     self.app.log_message("Harvest sequence complete!")
